@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime
+import os
 import textwrap
 import uuid
 from typing import Any, Dict, List
@@ -331,6 +332,10 @@ for goal in INITIAL_GOALS:
     goal["color_index"] = seeded_color_index(goal["id"])
 
 
+DEFAULT_FIREBASE_URL = os.getenv("FIREBASE_URL", "")
+DEFAULT_FIREBASE_TOKEN = os.getenv("FIREBASE_AUTH_TOKEN", "")
+
+
 app = Dash(__name__)
 app.title = "Goal Bubbles"
 server = app.server
@@ -513,13 +518,21 @@ app.layout = html.Div(
                             id="firebase-url",
                             placeholder="https://<project>.firebaseio.com/goals.json",
                             type="text",
+                            value=DEFAULT_FIREBASE_URL,
                         ),
                         dcc.Input(
                             id="firebase-token",
                             placeholder="Optional auth token (kept client-side)",
                             type="password",
+                            value=DEFAULT_FIREBASE_TOKEN,
                         ),
-                        html.Button("Sync to Firebase", id="sync-btn"),
+                        html.Div(
+                            className="sync-buttons",
+                            children=[
+                                html.Button("Sync to Firebase", id="sync-btn"),
+                                html.Button("Load from Firebase", id="load-btn", className="ghost"),
+                            ],
+                        ),
                         html.Div(id="sync-feedback", className="feedback"),
                     ],
                 ),
@@ -623,7 +636,7 @@ def update_status(n_clicks: int, goal_id: str, status_text: str, goals: List[Dic
 
 
 @callback(
-    Output("sync-feedback", "children"),
+    Output("sync-feedback", "children", allow_duplicate=True),
     Input("sync-btn", "n_clicks"),
     State("firebase-url", "value"),
     State("firebase-token", "value"),
@@ -642,6 +655,40 @@ def sync_to_firebase(n_clicks: int, url: str, token: str, goals: List[Dict[str, 
         return f"Firebase responded with {response.status_code}: {response.text}"
     except Exception as exc:  # noqa: BLE001
         return f"Sync failed: {exc}"
+
+
+@callback(
+    Output("goal-store", "data", allow_duplicate=True),
+    Output("sync-feedback", "children", allow_duplicate=True),
+    Input("load-btn", "n_clicks"),
+    State("firebase-url", "value"),
+    State("firebase-token", "value"),
+    State("goal-store", "data"),
+    prevent_initial_call=True,
+)
+def load_from_firebase(n_clicks: int, url: str, token: str, goals: List[Dict[str, Any]]):
+    if not url:
+        return goals, "Add your Firebase endpoint to sync the bubbles."
+
+    params = {"auth": token} if token else None
+    try:
+        response = requests.get(url, params=params, timeout=10)
+        if not response.ok:
+            return goals, f"Firebase responded with {response.status_code}: {response.text}"
+
+        payload = response.json()
+        if isinstance(payload, list):
+            hydrated = []
+            for goal in payload:
+                if isinstance(goal, dict):
+                    goal.setdefault("color_index", seeded_color_index(goal.get("id", str(uuid.uuid4()))))
+                    hydrated.append(goal)
+            if hydrated:
+                return hydrated, "Loaded goals from Firebase."
+            return goals, "Fetched data, but no valid goals were found to load."
+        return goals, "Firebase data was not a list. Ensure you stored a list of goal objects."
+    except Exception as exc:  # noqa: BLE001
+        return goals, f"Load failed: {exc}"
 
 
 if __name__ == "__main__":

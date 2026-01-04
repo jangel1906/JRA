@@ -148,6 +148,20 @@ body {
   box-shadow: 0 10px 24px rgba(247, 194, 102, 0.35);
 }
 
+.sync-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.sync-card .ghost {
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: none;
+}
+
 .feedback {
   margin-top: 8px;
   color: var(--accent);
