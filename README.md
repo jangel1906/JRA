@@ -11,11 +11,11 @@ A Dash-based web application that visualizes goals as colorful bubbles. Goals ca
    ```
 
 ## Running the app
-Start the Dash development server:
+Start the Dash development server (the port defaults to `8050`, or use the `PORT` env var if your host injects one):
 ```bash
-python app.py
+PORT=8050 python app.py
 ```
-The app will be available at `http://127.0.0.1:8050`.
+The app will be available at `http://127.0.0.1:<port>`.
 
 ### Interacting with the UI
 - **Update status + recolor**: pick a bubble in the “Update goal status” panel, add a progress/status note, and click **Update status**. Each save shifts the bubble to a new palette color.
