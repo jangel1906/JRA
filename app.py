@@ -1,12 +1,30 @@
 from __future__ import annotations
 
+import datetime
 import textwrap
 import uuid
-from typing import List, Dict, Any
+from typing import Any, Dict, List
+
+import requests
 
 from dash import Dash, Input, Output, State, dcc, html, callback
 
 # Starting set of goals provided by the user
+COLOR_PALETTE = [
+    ("#91f2c1", "#0f3a2d"),
+    ("#9dc7ff", "#102b5c"),
+    ("#ffdea8", "#5a3b0d"),
+    ("#f7b0dc", "#4e1035"),
+    ("#8ad8f2", "#0f3242"),
+    ("#d7c6ff", "#2d1c5c"),
+    ("#b1f0ff", "#0f324f"),
+]
+
+
+def seeded_color_index(seed: str) -> int:
+    return sum(ord(ch) for ch in seed) % len(COLOR_PALETTE)
+
+
 INITIAL_GOALS: List[Dict[str, Any]] = [
     {
         "id": str(uuid.uuid4()),
@@ -21,6 +39,7 @@ INITIAL_GOALS: List[Dict[str, Any]] = [
         "category": "Work",
         "horizon": "Short-Term",
         "focus": "Agile Ops",
+        "status": "Fresh goal",
     },
     {
         "id": str(uuid.uuid4()),
@@ -28,6 +47,7 @@ INITIAL_GOALS: List[Dict[str, Any]] = [
         "category": "Work",
         "horizon": "Short-Term",
         "focus": "Learning",
+        "status": "Fresh goal",
     },
     {
         "id": str(uuid.uuid4()),
@@ -35,6 +55,7 @@ INITIAL_GOALS: List[Dict[str, Any]] = [
         "category": "Work",
         "horizon": "Short-Term",
         "focus": "Agile Ops",
+        "status": "Fresh goal",
     },
     {
         "id": str(uuid.uuid4()),
@@ -42,6 +63,7 @@ INITIAL_GOALS: List[Dict[str, Any]] = [
         "category": "Work",
         "horizon": "Ongoing",
         "focus": "Learning",
+        "status": "Fresh goal",
     },
     {
         "id": str(uuid.uuid4()),
@@ -49,6 +71,7 @@ INITIAL_GOALS: List[Dict[str, Any]] = [
         "category": "Work",
         "horizon": "Ongoing",
         "focus": "Architecture",
+        "status": "Fresh goal",
     },
     {
         "id": str(uuid.uuid4()),
@@ -60,6 +83,7 @@ INITIAL_GOALS: List[Dict[str, Any]] = [
         "category": "Work",
         "horizon": "Ongoing",
         "focus": "Outcomes",
+        "status": "Fresh goal",
     },
     {
         "id": str(uuid.uuid4()),
@@ -67,6 +91,7 @@ INITIAL_GOALS: List[Dict[str, Any]] = [
         "category": "Community",
         "horizon": "Short-Term",
         "focus": "Giving Back",
+        "status": "Fresh goal",
     },
     {
         "id": str(uuid.uuid4()),
@@ -74,6 +99,7 @@ INITIAL_GOALS: List[Dict[str, Any]] = [
         "category": "Community",
         "horizon": "Ongoing",
         "focus": "Social",
+        "status": "Fresh goal",
     },
     {
         "id": str(uuid.uuid4()),
@@ -81,6 +107,7 @@ INITIAL_GOALS: List[Dict[str, Any]] = [
         "category": "Health & Routine",
         "horizon": "Habit",
         "focus": "Discipline",
+        "status": "Fresh goal",
     },
     {
         "id": str(uuid.uuid4()),
@@ -88,6 +115,7 @@ INITIAL_GOALS: List[Dict[str, Any]] = [
         "category": "Learning",
         "horizon": "Long-Term",
         "focus": "AI",
+        "status": "Fresh goal",
     },
     {
         "id": str(uuid.uuid4()),
@@ -95,6 +123,7 @@ INITIAL_GOALS: List[Dict[str, Any]] = [
         "category": "Community",
         "horizon": "Short-Term",
         "focus": "Fraternity",
+        "status": "Fresh goal",
     },
     {
         "id": str(uuid.uuid4()),
@@ -102,6 +131,7 @@ INITIAL_GOALS: List[Dict[str, Any]] = [
         "category": "Learning",
         "horizon": "Habit",
         "focus": "Reading",
+        "status": "Fresh goal",
     },
     {
         "id": str(uuid.uuid4()),
@@ -109,6 +139,7 @@ INITIAL_GOALS: List[Dict[str, Any]] = [
         "category": "Learning",
         "horizon": "Habit",
         "focus": "Media",
+        "status": "Fresh goal",
     },
     {
         "id": str(uuid.uuid4()),
@@ -116,6 +147,7 @@ INITIAL_GOALS: List[Dict[str, Any]] = [
         "category": "Learning",
         "horizon": "Short-Term",
         "focus": "AI",
+        "status": "Fresh goal",
     },
     {
         "id": str(uuid.uuid4()),
@@ -123,6 +155,7 @@ INITIAL_GOALS: List[Dict[str, Any]] = [
         "category": "Family & Friends",
         "horizon": "Habit",
         "focus": "Relationships",
+        "status": "Fresh goal",
     },
     {
         "id": str(uuid.uuid4()),
@@ -130,6 +163,7 @@ INITIAL_GOALS: List[Dict[str, Any]] = [
         "category": "Travel & Experiences",
         "horizon": "Short-Term",
         "focus": "Connection",
+        "status": "Fresh goal",
     },
     {
         "id": str(uuid.uuid4()),
@@ -137,6 +171,7 @@ INITIAL_GOALS: List[Dict[str, Any]] = [
         "category": "Personal Growth",
         "horizon": "Ongoing",
         "focus": "Creativity",
+        "status": "Fresh goal",
     },
     {
         "id": str(uuid.uuid4()),
@@ -144,6 +179,7 @@ INITIAL_GOALS: List[Dict[str, Any]] = [
         "category": "Family & Friends",
         "horizon": "Habit",
         "focus": "Relationships",
+        "status": "Fresh goal",
     },
     {
         "id": str(uuid.uuid4()),
@@ -151,6 +187,7 @@ INITIAL_GOALS: List[Dict[str, Any]] = [
         "category": "Faith",
         "horizon": "Habit",
         "focus": "Spirituality",
+        "status": "Fresh goal",
     },
     {
         "id": str(uuid.uuid4()),
@@ -158,6 +195,7 @@ INITIAL_GOALS: List[Dict[str, Any]] = [
         "category": "Health & Routine",
         "horizon": "Short-Term",
         "focus": "Fitness",
+        "status": "Fresh goal",
     },
     {
         "id": str(uuid.uuid4()),
@@ -165,6 +203,7 @@ INITIAL_GOALS: List[Dict[str, Any]] = [
         "category": "Health & Routine",
         "horizon": "Habit",
         "focus": "Digital Detox",
+        "status": "Fresh goal",
     },
     {
         "id": str(uuid.uuid4()),
@@ -172,6 +211,7 @@ INITIAL_GOALS: List[Dict[str, Any]] = [
         "category": "Travel & Experiences",
         "horizon": "Short-Term",
         "focus": "Adventure",
+        "status": "Fresh goal",
     },
     {
         "id": str(uuid.uuid4()),
@@ -179,6 +219,7 @@ INITIAL_GOALS: List[Dict[str, Any]] = [
         "category": "Personal",
         "horizon": "Short-Term",
         "focus": "Treat Yourself",
+        "status": "Fresh goal",
     },
     {
         "id": str(uuid.uuid4()),
@@ -186,6 +227,7 @@ INITIAL_GOALS: List[Dict[str, Any]] = [
         "category": "Personal",
         "horizon": "Short-Term",
         "focus": "Milestone",
+        "status": "Fresh goal",
     },
     {
         "id": str(uuid.uuid4()),
@@ -193,6 +235,7 @@ INITIAL_GOALS: List[Dict[str, Any]] = [
         "category": "Learning",
         "horizon": "Long-Term",
         "focus": "AI",
+        "status": "Fresh goal",
     },
     {
         "id": str(uuid.uuid4()),
@@ -200,6 +243,7 @@ INITIAL_GOALS: List[Dict[str, Any]] = [
         "category": "Personal Growth",
         "horizon": "Mindset",
         "focus": "Resilience",
+        "status": "Fresh goal",
     },
     {
         "id": str(uuid.uuid4()),
@@ -207,6 +251,7 @@ INITIAL_GOALS: List[Dict[str, Any]] = [
         "category": "Personal Growth",
         "horizon": "Ongoing",
         "focus": "EQ",
+        "status": "Fresh goal",
     },
     {
         "id": str(uuid.uuid4()),
@@ -214,6 +259,7 @@ INITIAL_GOALS: List[Dict[str, Any]] = [
         "category": "Family & Friends",
         "horizon": "Habit",
         "focus": "Family",
+        "status": "Fresh goal",
     },
     {
         "id": str(uuid.uuid4()),
@@ -221,6 +267,7 @@ INITIAL_GOALS: List[Dict[str, Any]] = [
         "category": "Financial & Legal",
         "horizon": "Short-Term",
         "focus": "Estate",
+        "status": "Fresh goal",
     },
     {
         "id": str(uuid.uuid4()),
@@ -228,6 +275,7 @@ INITIAL_GOALS: List[Dict[str, Any]] = [
         "category": "Personal",
         "horizon": "Short-Term",
         "focus": "Vision",
+        "status": "Fresh goal",
     },
     {
         "id": str(uuid.uuid4()),
@@ -235,6 +283,7 @@ INITIAL_GOALS: List[Dict[str, Any]] = [
         "category": "Community",
         "horizon": "Short-Term",
         "focus": "Travel Planning",
+        "status": "Fresh goal",
     },
     {
         "id": str(uuid.uuid4()),
@@ -242,6 +291,7 @@ INITIAL_GOALS: List[Dict[str, Any]] = [
         "category": "Family & Friends",
         "horizon": "Short-Term",
         "focus": "Family",
+        "status": "Fresh goal",
     },
     {
         "id": str(uuid.uuid4()),
@@ -249,6 +299,7 @@ INITIAL_GOALS: List[Dict[str, Any]] = [
         "category": "Family & Friends",
         "horizon": "Short-Term",
         "focus": "Family",
+        "status": "Fresh goal",
     },
     {
         "id": str(uuid.uuid4()),
@@ -256,6 +307,7 @@ INITIAL_GOALS: List[Dict[str, Any]] = [
         "category": "Travel & Experiences",
         "horizon": "Short-Term",
         "focus": "Sports",
+        "status": "Fresh goal",
     },
     {
         "id": str(uuid.uuid4()),
@@ -263,6 +315,7 @@ INITIAL_GOALS: List[Dict[str, Any]] = [
         "category": "Financial & Legal",
         "horizon": "Long-Term",
         "focus": "Income",
+        "status": "Fresh goal",
     },
     {
         "id": str(uuid.uuid4()),
@@ -270,8 +323,12 @@ INITIAL_GOALS: List[Dict[str, Any]] = [
         "category": "Financial & Legal",
         "horizon": "Long-Term",
         "focus": "Retirement",
+        "status": "Fresh goal",
     },
 ]
+
+for goal in INITIAL_GOALS:
+    goal["color_index"] = seeded_color_index(goal["id"])
 
 
 app = Dash(__name__)
@@ -281,11 +338,14 @@ server = app.server
 
 def bubble_style(goal: Dict[str, Any]) -> Dict[str, Any]:
     # Size bubbles loosely based on goal length for visual variety
-    base_size = 160
-    scaled = min(240, base_size + len(goal["title"]) // 4)
+    base_size = 170
+    scaled = min(260, base_size + len(goal["title"]) // 4)
+    colors = COLOR_PALETTE[goal.get("color_index", 0)]
     return {
         "width": f"{scaled}px",
         "height": f"{scaled}px",
+        "background": f"radial-gradient(circle at 30% 30%, {colors[0]} 0%, {colors[0]} 35%, {colors[1]} 100%)",
+        "boxShadow": "0 16px 32px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.25)",
     }
 
 
@@ -298,6 +358,7 @@ def render_goal(goal: Dict[str, Any]) -> html.Div:
         children=[
             html.Div(className="bubble-focus", children=goal.get("focus", "")),
             html.Div(className="bubble-title", children=goal["title"]),
+            html.Div(className="bubble-status", children=goal.get("status", "")),
             html.Div(className="bubble-meta", children=horizon),
         ],
     )
@@ -408,6 +469,24 @@ app.layout = html.Div(
                         html.Div(id="add-goal-feedback", className="feedback"),
                     ],
                 ),
+                html.Div(
+                    className="control-block update-form",
+                    children=[
+                        html.Label("Update goal status & refresh its color"),
+                        dcc.Dropdown(
+                            id="status-goal-picker",
+                            placeholder="Select a goal to update",
+                            optionHeight=60,
+                        ),
+                        dcc.Textarea(
+                            id="status-text",
+                            placeholder="What changed? Capture latest status, progress, or next step.",
+                            rows=3,
+                        ),
+                        html.Button("Update status", id="update-status-btn"),
+                        html.Div(id="status-feedback", className="feedback"),
+                    ],
+                ),
             ],
         ),
         html.Section(
@@ -416,6 +495,34 @@ app.layout = html.Div(
                 html.Div(id="goal-count", className="status-card"),
                 html.Div(id="category-count", className="status-card"),
                 html.Div(id="horizon-count", className="status-card"),
+            ],
+        ),
+        html.Section(
+            className="sync",
+            children=[
+                html.Div(
+                    className="control-block sync-card",
+                    children=[
+                        html.Label("Push goals to Firebase (Realtime DB / Firestore REST)", className="sync-title"),
+                        html.P(
+                            "Provide a Firebase Realtime DB base URL (ending in .json) or a Firestore REST endpoint. "
+                            "Include an auth token if your rules require it.",
+                            className="sync-help",
+                        ),
+                        dcc.Input(
+                            id="firebase-url",
+                            placeholder="https://<project>.firebaseio.com/goals.json",
+                            type="text",
+                        ),
+                        dcc.Input(
+                            id="firebase-token",
+                            placeholder="Optional auth token (kept client-side)",
+                            type="password",
+                        ),
+                        html.Button("Sync to Firebase", id="sync-btn"),
+                        html.Div(id="sync-feedback", className="feedback"),
+                    ],
+                ),
             ],
         ),
         html.Section(id="bubble-grid", className="bubble-grid"),
@@ -443,6 +550,8 @@ def add_goal(n_clicks: int, text: str, category: str, horizon: str, goals: List[
         "category": category,
         "horizon": horizon,
         "focus": "New",
+        "status": "Fresh update",
+        "color_index": 0,
     }
     updated = goals + [new_goal]
     return updated, "Added! The bubble is now in the grid."
@@ -453,6 +562,7 @@ def add_goal(n_clicks: int, text: str, category: str, horizon: str, goals: List[
     Output("goal-count", "children"),
     Output("category-count", "children"),
     Output("horizon-count", "children"),
+    Output("status-goal-picker", "options"),
     Input("goal-store", "data"),
     Input("category-filter", "value"),
     Input("horizon-filter", "value"),
@@ -467,12 +577,71 @@ def update_grid(goals: List[Dict[str, Any]], categories: List[str], horizons: Li
     if not bubbles:
         bubbles = [html.Div(className="empty", children="No goals match your filters yet.")]
 
+    picker_options = [
+        {"label": goal["title"], "value": goal["id"]}
+        for goal in goals
+    ]
+
     return (
         bubbles,
         f"Total goals: {len(goals)}",
         f"Selected categories: {len(categories) if categories else 'All'}",
         f"Selected horizons: {len(horizons) if horizons else 'All'}",
+        picker_options,
     )
+
+
+@callback(
+    Output("goal-store", "data", allow_duplicate=True),
+    Output("status-feedback", "children"),
+    Input("update-status-btn", "n_clicks"),
+    State("status-goal-picker", "value"),
+    State("status-text", "value"),
+    State("goal-store", "data"),
+    prevent_initial_call=True,
+)
+def update_status(n_clicks: int, goal_id: str, status_text: str, goals: List[Dict[str, Any]]):
+    if not goal_id or not status_text:
+        return goals, "Pick a goal and add a status update to recolor the bubble."
+
+    updated_goals = []
+    timestamp = datetime.datetime.now().strftime("Updated %b %d, %H:%M")
+    for goal in goals:
+        if goal["id"] == goal_id:
+            color_index = (goal.get("color_index", seeded_color_index(goal_id)) + 1) % len(COLOR_PALETTE)
+            updated_goal = {
+                **goal,
+                "status": status_text.strip(),
+                "color_index": color_index,
+                "updated_at": timestamp,
+            }
+            updated_goals.append(updated_goal)
+        else:
+            updated_goals.append(goal)
+
+    return updated_goals, "Status saved! Bubble refreshed with a new hue."
+
+
+@callback(
+    Output("sync-feedback", "children"),
+    Input("sync-btn", "n_clicks"),
+    State("firebase-url", "value"),
+    State("firebase-token", "value"),
+    State("goal-store", "data"),
+    prevent_initial_call=True,
+)
+def sync_to_firebase(n_clicks: int, url: str, token: str, goals: List[Dict[str, Any]]):
+    if not url:
+        return "Add your Firebase endpoint to sync the bubbles."
+
+    params = {"auth": token} if token else None
+    try:
+        response = requests.put(url, json=goals, params=params, timeout=10)
+        if response.ok:
+            return "Synced! Your goals were pushed to Firebase."
+        return f"Firebase responded with {response.status_code}: {response.text}"
+    except Exception as exc:  # noqa: BLE001
+        return f"Sync failed: {exc}"
 
 
 if __name__ == "__main__":
