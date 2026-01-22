@@ -19,9 +19,17 @@ app = dash.Dash(
     external_stylesheets=[dbc.themes.BOOTSTRAP],
     suppress_callback_exceptions=True,
     meta_tags=[
-        {"name": "viewport", "content": "width=device-width, initial-scale=1.0"}
+        {"name": "viewport", "content": "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"},
+        {"name": "apple-mobile-web-app-capable", "content": "yes"},
+        {"name": "apple-mobile-web-app-status-bar-style", "content": "black-translucent"},
+        {"name": "apple-mobile-web-app-title", "content": "Task Multiverse"},
+        {"name": "theme-color", "content": "#667eea"},
+        {"name": "description", "content": "A Sims-like task management app with characters in multiple universes"}
     ]
 )
+
+# Enable serving of static files
+app.title = "Task Multiverse"
 
 # Character personalities and traits
 CHARACTERS = [
@@ -160,6 +168,11 @@ def create_universe_zone(universe):
 
 # App layout
 app.layout = dbc.Container([
+    # PWA Support
+    html.Link(rel='manifest', href='/assets/manifest.json'),
+    html.Link(rel='icon', type='image/png', sizes='192x192', href='/assets/icons/icon-192x192.png'),
+    html.Link(rel='apple-touch-icon', sizes='180x180', href='/assets/icons/icon-192x192.png'),
+
     # Store components for state management
     dcc.Store(id='tasks-store', data=[]),
     dcc.Store(id='character-positions', data={}),
@@ -259,7 +272,7 @@ app.layout = dbc.Container([
                     html.Div(id="task-list")
                 ])
             ])
-        ], width=4),
+        ], width=12, lg=4),
 
         # Right panel - Multiverse visualization
         dbc.Col([
@@ -283,7 +296,7 @@ app.layout = dbc.Container([
                     })
                 ])
             ])
-        ], width=8)
+        ], width=12, lg=8)
     ]),
 
     # Custom CSS
@@ -310,6 +323,87 @@ app.layout = dbc.Container([
         .task-item:hover {
             transform: translateX(5px);
         }
+
+        /* Mobile optimizations */
+        @media (max-width: 768px) {
+            .container-fluid {
+                padding: 10px !important;
+            }
+
+            h1 {
+                font-size: 24px !important;
+            }
+
+            .card {
+                margin-bottom: 10px !important;
+            }
+
+            .universe-zone {
+                margin: 5px !important;
+                padding: 10px !important;
+                min-height: 150px !important;
+            }
+
+            button {
+                font-size: 14px !important;
+                padding: 10px !important;
+            }
+
+            /* Improve touch targets */
+            .btn {
+                min-height: 44px;
+                min-width: 44px;
+            }
+
+            /* Prevent zoom on input focus */
+            input, textarea, select {
+                font-size: 16px !important;
+            }
+        }
+
+        /* Add touch feedback */
+        .task-item:active, .btn:active {
+            transform: scale(0.98);
+            opacity: 0.8;
+        }
+
+        /* Smooth scrolling for mobile */
+        * {
+            -webkit-overflow-scrolling: touch;
+        }
+    """),
+
+    # Service Worker Registration
+    html.Script("""
+        // Register service worker for PWA functionality
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/assets/service-worker.js')
+                    .then(function(registration) {
+                        console.log('ServiceWorker registered:', registration.scope);
+                    })
+                    .catch(function(error) {
+                        console.log('ServiceWorker registration failed:', error);
+                    });
+            });
+        }
+
+        // Add to home screen prompt
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            console.log('App can be installed');
+        });
+
+        // Handle install
+        window.addEventListener('appinstalled', () => {
+            console.log('PWA installed successfully');
+            deferredPrompt = null;
+        });
+
+        // Prevent pull-to-refresh on mobile
+        document.body.style.overscrollBehavior = 'contain';
     """)
 ], fluid=True, style={"backgroundColor": "#f8f9fa", "minHeight": "100vh", "paddingBottom": "50px"})
 
