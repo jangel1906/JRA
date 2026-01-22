@@ -297,114 +297,11 @@ app.layout = dbc.Container([
                 ])
             ])
         ], width=12, lg=8)
-    ]),
+    ])
 
-    # Custom CSS
-    html.Style("""
-        @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-        }
-
-        .universe-zone {
-            transition: all 0.3s ease;
-        }
-
-        .universe-zone:hover {
-            transform: scale(1.02);
-            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-        }
-
-        .task-item {
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-
-        .task-item:hover {
-            transform: translateX(5px);
-        }
-
-        /* Mobile optimizations */
-        @media (max-width: 768px) {
-            .container-fluid {
-                padding: 10px !important;
-            }
-
-            h1 {
-                font-size: 24px !important;
-            }
-
-            .card {
-                margin-bottom: 10px !important;
-            }
-
-            .universe-zone {
-                margin: 5px !important;
-                padding: 10px !important;
-                min-height: 150px !important;
-            }
-
-            button {
-                font-size: 14px !important;
-                padding: 10px !important;
-            }
-
-            /* Improve touch targets */
-            .btn {
-                min-height: 44px;
-                min-width: 44px;
-            }
-
-            /* Prevent zoom on input focus */
-            input, textarea, select {
-                font-size: 16px !important;
-            }
-        }
-
-        /* Add touch feedback */
-        .task-item:active, .btn:active {
-            transform: scale(0.98);
-            opacity: 0.8;
-        }
-
-        /* Smooth scrolling for mobile */
-        * {
-            -webkit-overflow-scrolling: touch;
-        }
-    """),
-
-    # Service Worker Registration
-    html.Script("""
-        // Register service worker for PWA functionality
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                navigator.serviceWorker.register('/assets/service-worker.js')
-                    .then(function(registration) {
-                        console.log('ServiceWorker registered:', registration.scope);
-                    })
-                    .catch(function(error) {
-                        console.log('ServiceWorker registration failed:', error);
-                    });
-            });
-        }
-
-        // Add to home screen prompt
-        let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            console.log('App can be installed');
-        });
-
-        // Handle install
-        window.addEventListener('appinstalled', () => {
-            console.log('PWA installed successfully');
-            deferredPrompt = null;
-        });
-
-        // Prevent pull-to-refresh on mobile
-        document.body.style.overscrollBehavior = 'contain';
-    """)
+    # CSS and JavaScript are automatically loaded from assets/ folder:
+    # - assets/style.css (custom styles and animations)
+    # - assets/pwa-init.js (PWA and service worker registration)
 ], fluid=True, style={"backgroundColor": "#f8f9fa", "minHeight": "100vh", "paddingBottom": "50px"})
 
 # Callbacks
@@ -704,4 +601,4 @@ server = app.server
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8051))
-    app.run_server(debug=True, host='0.0.0.0', port=port)
+    app.run(debug=True, host='0.0.0.0', port=port)
