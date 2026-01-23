@@ -229,16 +229,24 @@ login_layout = html.Div([
                 dbc.Card([
                     dbc.CardBody([
                         html.Div([
-                            html.H2([
-                                html.Span("😇", className="angel-halo", style={"fontSize": "3rem", "marginRight": "10px"}),
-                                "Angel's Flow"
-                            ], className="text-center mb-1", style={
-                                "fontWeight": "800",
-                                "background": "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
-                                "WebkitBackgroundClip": "text",
-                                "WebkitTextFillColor": "transparent",
-                                "backgroundClip": "text"
-                            }),
+                            html.Div([
+                                html.Div([
+                                    html.Div(className="custom-halo"),
+                                    html.Div(className="halo-particle"),
+                                    html.Div(className="halo-particle"),
+                                    html.Div(className="halo-particle"),
+                                    html.H2([
+                                        html.Span("😇", className="angel-halo", style={"fontSize": "3rem", "marginRight": "10px"}),
+                                        "Angel's Flow"
+                                    ], className="mb-1", style={
+                                        "fontWeight": "800",
+                                        "background": "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
+                                        "WebkitBackgroundClip": "text",
+                                        "WebkitTextFillColor": "transparent",
+                                        "backgroundClip": "text"
+                                    })
+                                ], className="halo-container", style={"display": "inline-block", "position": "relative"})
+                            ], className="text-center"),
                             html.P("Intelligent Task Management", className="text-center text-muted mb-4"),
                             dbc.Label("Username", className="fw-bold"),
                             dbc.Input(
@@ -332,16 +340,22 @@ def create_main_layout():
     dbc.Row([
         dbc.Col([
             html.Div([
-                html.H1([
-                    html.Span("😇", className="angel-halo", style={"fontSize": "2.5rem", "marginRight": "10px"}),
-                    "Angel's Flow"
-                ], className="mb-1", style={
-                    "fontWeight": "800",
-                    "background": "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
-                    "WebkitBackgroundClip": "text",
-                    "WebkitTextFillColor": "transparent",
-                    "backgroundClip": "text"
-                }),
+                html.Div([
+                    html.Div(className="custom-halo"),
+                    html.Div(className="halo-particle"),
+                    html.Div(className="halo-particle"),
+                    html.Div(className="halo-particle"),
+                    html.H1([
+                        html.Span("😇", className="angel-halo", style={"fontSize": "2.5rem", "marginRight": "10px"}),
+                        "Angel's Flow"
+                    ], className="mb-1", style={
+                        "fontWeight": "800",
+                        "background": "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
+                        "WebkitBackgroundClip": "text",
+                        "WebkitTextFillColor": "transparent",
+                        "backgroundClip": "text"
+                    })
+                ], className="halo-container", style={"display": "inline-block", "position": "relative"}),
                 html.P("Intelligent Task Management", className="text-muted mb-0")
             ], className="text-center mb-0")
         ], width=True),
