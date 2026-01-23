@@ -57,6 +57,7 @@ Done! 🎉
 ### 🎯 Task Management
 - **4 Priority Levels** - Critical, High, Medium, Low
 - **6 Categories** - Work 💼, Personal 🏠, Health ❤️, Learning 📚, Creative 🎨, Social 👥
+- **Edit Tasks** - ✏️ Click edit to modify any task after creation
 - **Due Dates** - Never miss deadlines
 - **Search & Filter** - Find tasks instantly
 - **Quick Views** - All Tasks, Smart View, Due Today
@@ -140,11 +141,20 @@ Access at: `http://localhost:8052`
 - **⚡ Smart View** - AI-sorted by importance (recommended)
 - **📅 Due Today** - What's urgent now
 
-### Complete Tasks
+### Manage Tasks
 
-- ✅ Check the box to complete
-- 🗑️ Click trash to delete
-- 🔍 Use search to find tasks
+- ✏️ **Edit** - Click edit icon to modify task details
+- ✅ **Complete** - Check the box when done
+- 🗑️ **Delete** - Click trash to remove
+- 🔍 **Search** - Find tasks by keyword
+
+### Edit a Task
+
+1. Click the **✏️ Edit** button on any task
+2. Modal opens with current task data
+3. Update description, priority, category, or due date
+4. Click **"Save Changes"** to update
+5. Click **"Cancel"** to close without saving
 
 ---
 

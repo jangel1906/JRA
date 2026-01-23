@@ -139,12 +139,21 @@ def create_task_card(task):
                         due_badge
                     ])
                 ], style={"flex": "1"}),
-                dbc.Button(
-                    html.I(className="fas fa-trash"),
-                    id={"type": "delete-task", "index": task["id"]},
-                    color="light",
-                    size="sm"
-                )
+                html.Div([
+                    dbc.Button(
+                        html.I(className="fas fa-edit"),
+                        id={"type": "edit-task", "index": task["id"]},
+                        color="light",
+                        size="sm",
+                        className="me-2"
+                    ),
+                    dbc.Button(
+                        html.I(className="fas fa-trash"),
+                        id={"type": "delete-task", "index": task["id"]},
+                        color="light",
+                        size="sm"
+                    )
+                ], className="d-flex")
             ], className="d-flex align-items-center")
         ])
     ], className="mb-3 task-card", style={
@@ -157,6 +166,52 @@ app.layout = dbc.Container([
     # Data stores
     dcc.Store(id="tasks-store", data=[]),
     dcc.Store(id="filter-state", data={"category": "all", "search": ""}),
+    dcc.Store(id="edit-task-store", data=None),
+
+    # Edit Task Modal
+    dbc.Modal([
+        dbc.ModalHeader(dbc.ModalTitle("Edit Task")),
+        dbc.ModalBody([
+            dbc.Label("Task Description"),
+            dbc.Textarea(
+                id="edit-task-description",
+                rows=3,
+                className="mb-3"
+            ),
+            dbc.Row([
+                dbc.Col([
+                    dbc.Label("Priority", size="sm"),
+                    dbc.Select(
+                        id="edit-task-priority",
+                        options=[{"label": v["name"], "value": k} for k, v in PRIORITIES.items()],
+                        size="sm"
+                    )
+                ], width=6),
+                dbc.Col([
+                    dbc.Label("Category", size="sm"),
+                    dbc.Select(
+                        id="edit-task-category",
+                        options=[{"label": f"{v['icon']} {v['name']}", "value": k} for k, v in CATEGORIES.items()],
+                        size="sm"
+                    )
+                ], width=6)
+            ], className="mb-3"),
+            dbc.Row([
+                dbc.Col([
+                    dbc.Label("Due Date", size="sm"),
+                    dbc.Input(
+                        id="edit-task-due-date",
+                        type="date",
+                        size="sm"
+                    )
+                ], width=12)
+            ])
+        ]),
+        dbc.ModalFooter([
+            dbc.Button("Cancel", id="cancel-edit-btn", color="secondary", className="me-2"),
+            dbc.Button("Save Changes", id="save-edit-btn", color="primary")
+        ])
+    ], id="edit-modal", is_open=False, size="lg"),
 
     # Header
     dbc.Row([
@@ -457,6 +512,83 @@ def delete_task(n_clicks, tasks):
     task_id = json.loads(trigger.split(".")[0])["index"]
 
     tasks = [t for t in tasks if t["id"] != task_id]
+    return tasks
+
+@app.callback(
+    Output("edit-modal", "is_open"),
+    Output("edit-task-store", "data"),
+    Input({"type": "edit-task", "index": ALL}, "n_clicks"),
+    Input("cancel-edit-btn", "n_clicks"),
+    Input("save-edit-btn", "n_clicks"),
+    State("tasks-store", "data"),
+    prevent_initial_call=True
+)
+def toggle_edit_modal(edit_clicks, cancel_clicks, save_clicks, tasks):
+    """Open/close edit modal and store task being edited"""
+    if not ctx.triggered:
+        return False, None
+
+    trigger_id = ctx.triggered[0]["prop_id"]
+
+    # If edit button clicked, open modal and store task ID
+    if "edit-task" in trigger_id and any(edit_clicks):
+        task_id = json.loads(trigger_id.split(".")[0])["index"]
+        return True, task_id
+
+    # If cancel or save clicked, close modal
+    return False, None
+
+@app.callback(
+    Output("edit-task-description", "value"),
+    Output("edit-task-priority", "value"),
+    Output("edit-task-category", "value"),
+    Output("edit-task-due-date", "value"),
+    Input("edit-task-store", "data"),
+    State("tasks-store", "data"),
+    prevent_initial_call=True
+)
+def populate_edit_modal(task_id, tasks):
+    """Populate edit modal with task data"""
+    if not task_id:
+        return "", 3, "personal", ""
+
+    # Find the task
+    task = next((t for t in tasks if t["id"] == task_id), None)
+    if not task:
+        return "", 3, "personal", ""
+
+    return (
+        task.get("description", ""),
+        task.get("priority", 3),
+        task.get("category", "personal"),
+        task.get("due_date", "")
+    )
+
+@app.callback(
+    Output("tasks-store", "data", allow_duplicate=True),
+    Input("save-edit-btn", "n_clicks"),
+    State("edit-task-store", "data"),
+    State("edit-task-description", "value"),
+    State("edit-task-priority", "value"),
+    State("edit-task-category", "value"),
+    State("edit-task-due-date", "value"),
+    State("tasks-store", "data"),
+    prevent_initial_call=True
+)
+def save_edited_task(n_clicks, task_id, description, priority, category, due_date, tasks):
+    """Save edited task"""
+    if not n_clicks or not task_id:
+        return tasks
+
+    # Find and update the task
+    for task in tasks:
+        if task["id"] == task_id:
+            task["description"] = description.strip() if description else task["description"]
+            task["priority"] = int(priority)
+            task["category"] = category
+            task["due_date"] = due_date if due_date else None
+            break
+
     return tasks
 
 if __name__ == "__main__":
