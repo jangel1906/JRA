@@ -896,14 +896,13 @@ def handle_login(n_clicks, username, password):
         return {"logged_in": False, "username": ""}, None
 
     if not username or not username.strip():
-        return {"logged_in": False, "username": ""}, dbc.Alert("Please enter your name", color="warning", duration=3000)
+        return {"logged_in": False, "username": ""}, dbc.Alert("Please enter your username", color="warning", duration=3000)
 
-    # Simple authentication (for demo - accept any password with username)
-    # In production, you'd validate against a database
-    if password and len(password) >= 4:
-        return {"logged_in": True, "username": username.strip()}, None
+    # Authenticate with specific credentials
+    if username.strip() == "jangel1906" and password == "Tokyo1913@":
+        return {"logged_in": True, "username": "jangel1906"}, None
 
-    return {"logged_in": False, "username": ""}, dbc.Alert("Password must be at least 4 characters", color="danger", duration=3000)
+    return {"logged_in": False, "username": ""}, dbc.Alert("Invalid username or password", color="danger", duration=3000)
 
 @app.callback(
     Output("login-store", "data", allow_duplicate=True),
