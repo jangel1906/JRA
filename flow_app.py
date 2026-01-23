@@ -135,8 +135,9 @@ def calculate_task_score(task):
 
     if task.get("due_date"):
         try:
-            due = datetime.strptime(task["due_date"], "%Y-%m-%d")
-            days_until = (due - datetime.now()).days
+            due_date = datetime.strptime(task["due_date"], "%Y-%m-%d").date()
+            today = datetime.now().date()
+            days_until = (due_date - today).days
             if days_until < 0:
                 score += 100  # Overdue
             elif days_until == 0:
@@ -157,8 +158,9 @@ def create_task_card(task):
     due_badge = None
     if task.get("due_date"):
         try:
-            due = datetime.strptime(task["due_date"], "%Y-%m-%d")
-            days_until = (due - datetime.now()).days
+            due_date = datetime.strptime(task["due_date"], "%Y-%m-%d").date()
+            today = datetime.now().date()
+            days_until = (due_date - today).days
 
             if days_until < 0:
                 due_text, due_color = f"Overdue {abs(days_until)}d", "danger"
@@ -167,7 +169,7 @@ def create_task_card(task):
             elif days_until == 1:
                 due_text, due_color = "Tomorrow", "info"
             else:
-                due_text, due_color = due.strftime("%b %d"), "secondary"
+                due_text, due_color = due_date.strftime("%b %d"), "secondary"
 
             due_badge = dbc.Badge(due_text, color=due_color, className="me-2")
         except:
@@ -622,8 +624,8 @@ def update_tasks(tasks, view, search, category, streak):
         filtered = [t for t in filtered if t.get("category") == category]
 
     if view == "today":
-        today = datetime.now().strftime("%Y-%m-%d")
-        filtered = [t for t in filtered if t.get("due_date") == today]
+        today_str = datetime.now().date().strftime("%Y-%m-%d")
+        filtered = [t for t in filtered if t.get("due_date") == today_str]
     elif view == "smart":
         filtered.sort(key=calculate_task_score, reverse=True)
 
