@@ -229,6 +229,7 @@ app.layout = html.Div([
     dcc.Store(id="filter-state", data={"category": "all", "search": ""}),
     dcc.Store(id="edit-task-store", data=None),
     dcc.Store(id="theme-store", data="light"),
+    dcc.Store(id="streak-store", data=0),
 
     # Quote Toast Container
     html.Div(id="quote-toast-container", style={"position": "fixed", "top": "20px", "right": "20px", "zIndex": "9999"}),
@@ -278,6 +279,32 @@ app.layout = html.Div([
         ])
     ], id="edit-modal", is_open=False, size="lg"),
 
+    # Reset Metrics Modal
+    dbc.Modal([
+        dbc.ModalHeader(dbc.ModalTitle("Reset Metrics")),
+        dbc.ModalBody([
+            html.P("Select which metrics you want to reset:", className="mb-3"),
+            dbc.Checklist(
+                id="reset-options",
+                options=[
+                    {"label": "Clear all completed tasks", "value": "completed"},
+                    {"label": "Reset streak counter", "value": "streak"}
+                ],
+                value=[],
+                className="mb-3"
+            ),
+            dbc.Alert(
+                "This action cannot be undone!",
+                color="warning",
+                className="mb-0"
+            )
+        ]),
+        dbc.ModalFooter([
+            dbc.Button("Cancel", id="cancel-reset-btn", color="secondary", className="me-2"),
+            dbc.Button("Reset Selected", id="confirm-reset-btn", color="danger")
+        ])
+    ], id="reset-modal", is_open=False),
+
     # Header
     dbc.Row([
         dbc.Col([
@@ -297,6 +324,15 @@ app.layout = html.Div([
         ], width=True),
         dbc.Col([
             html.Div([
+                dbc.Button(
+                    html.I(className="fas fa-redo"),
+                    id="reset-metrics-btn",
+                    color="light",
+                    size="lg",
+                    className="rounded-circle me-2",
+                    style={"width": "50px", "height": "50px"},
+                    title="Reset Metrics"
+                ),
                 dbc.Button(
                     html.I(id="theme-icon", className="fas fa-moon"),
                     id="theme-toggle",
@@ -499,12 +535,14 @@ def add_task(n, description, priority, category, due_date, tasks):
     Output("stat-active", "children"),
     Output("stat-completed", "children"),
     Output("stat-rate", "children"),
+    Output("stat-streak", "children"),
     Input("tasks-store", "data"),
     Input("view-filter", "value"),
     Input("search-input", "value"),
-    Input("category-filter", "value")
+    Input("category-filter", "value"),
+    Input("streak-store", "data")
 )
-def update_tasks(tasks, view, search, category):
+def update_tasks(tasks, view, search, category, streak):
     """Update task list and stats"""
     if not tasks:
         empty = html.Div([
@@ -512,7 +550,7 @@ def update_tasks(tasks, view, search, category):
             html.H5("No tasks yet", className="text-muted"),
             html.P("Add your first task to get started!", className="text-muted")
         ], className="text-center py-5")
-        return empty, "0", "0", "0%"
+        return empty, "0", "0", "0%", str(streak)
 
     # Filter tasks
     active_tasks = [t for t in tasks if not t.get("completed")]
@@ -548,23 +586,31 @@ def update_tasks(tasks, view, search, category):
     total = len(tasks)
     completion_rate = f"{int((completed_count / total * 100))}%" if total > 0 else "0%"
 
-    return task_cards, str(active_count), str(completed_count), completion_rate
+    return task_cards, str(active_count), str(completed_count), completion_rate, str(streak)
 
 @app.callback(
     Output("tasks-store", "data", allow_duplicate=True),
     Output("quote-toast-container", "children"),
+    Output("streak-store", "data", allow_duplicate=True),
     Input({"type": "complete-task", "index": ALL}, "value"),
     State("tasks-store", "data"),
+    State("streak-store", "data"),
     prevent_initial_call=True
 )
-def complete_task(values, tasks):
+def complete_task(values, tasks, current_streak):
     """Mark task as completed and show inspirational quote"""
     if not ctx.triggered:
-        return tasks, None
+        return tasks, None, current_streak
 
     trigger = ctx.triggered[0]["prop_id"]
     if not trigger or ".value" not in trigger:
-        return tasks, None
+        return tasks, None, current_streak
+
+    # Get the actual checkbox value - only proceed if it's True (checked)
+    checkbox_value = ctx.triggered[0].get("value")
+    if not checkbox_value:
+        # Checkbox was unchecked or not set - don't show quote
+        return tasks, None, current_streak
 
     task_id = json.loads(trigger.split(".")[0])["index"]
 
@@ -639,9 +685,11 @@ def complete_task(values, tasks):
             }
         )
 
-        return tasks, quote_toast
+        # Increment streak when task is completed
+        new_streak = current_streak + 1
+        return tasks, quote_toast, new_streak
 
-    return tasks, None
+    return tasks, None, current_streak
 
 @app.callback(
     Output("tasks-store", "data", allow_duplicate=True),
@@ -757,6 +805,48 @@ def toggle_theme(n_clicks, current_theme):
 def apply_theme(theme):
     """Apply theme class to container"""
     return f"theme-{theme}"
+
+@app.callback(
+    Output("reset-modal", "is_open"),
+    Input("reset-metrics-btn", "n_clicks"),
+    Input("cancel-reset-btn", "n_clicks"),
+    Input("confirm-reset-btn", "n_clicks"),
+    State("reset-modal", "is_open"),
+    prevent_initial_call=True
+)
+def toggle_reset_modal(open_clicks, cancel_clicks, confirm_clicks, is_open):
+    """Toggle reset metrics modal"""
+    if ctx.triggered_id == "reset-metrics-btn":
+        return True
+    return False
+
+@app.callback(
+    Output("tasks-store", "data", allow_duplicate=True),
+    Output("streak-store", "data", allow_duplicate=True),
+    Output("reset-options", "value"),
+    Input("confirm-reset-btn", "n_clicks"),
+    State("reset-options", "value"),
+    State("tasks-store", "data"),
+    State("streak-store", "data"),
+    prevent_initial_call=True
+)
+def reset_metrics(n_clicks, reset_options, tasks, streak):
+    """Reset selected metrics"""
+    if not n_clicks or not reset_options:
+        return tasks, streak, []
+
+    new_tasks = tasks
+    new_streak = streak
+
+    if "completed" in reset_options:
+        # Remove all completed tasks
+        new_tasks = [t for t in tasks if not t.get("completed")]
+
+    if "streak" in reset_options:
+        # Reset streak to 0
+        new_streak = 0
+
+    return new_tasks, new_streak, []
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8052))
