@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: flow-task-management
+    env: python
+    region: oregon
+    plan: free
+    branch: claude/task-management-multiverse-app-Ya2OQ
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn flow_app:server --bind 0.0.0.0:$PORT --workers 1 --threads 8 --timeout 0"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: PORT
+        generateValue: true
