@@ -50,9 +50,11 @@ Done! 🎉
 
 ### 🎨 Beautiful Design
 - **Modern UI** - Clean, minimal interface
+- **Dark Mode** - 🌙 Toggle between light and dark themes
 - **Smooth Animations** - Delightful micro-interactions
 - **Responsive** - Perfect on phone, tablet, desktop
 - **Color-Coded** - Visual priority system
+- **Inspirational Quotes** - Famous quotes with pictures when you complete tasks
 
 ### 🎯 Task Management
 - **4 Priority Levels** - Critical, High, Medium, Low
@@ -155,6 +157,51 @@ Access at: `http://localhost:8052`
 3. Update description, priority, category, or due date
 4. Click **"Save Changes"** to update
 5. Click **"Cancel"** to close without saving
+
+### Dark Mode
+
+Toggle between light and dark themes:
+
+1. Click the **🌙 Moon** button in the top-right corner
+2. Theme switches to dark mode
+3. Icon changes to **☀️ Sun**
+4. Click again to return to light mode
+5. Smooth transition with all elements themed
+
+**Benefits:**
+- Easier on eyes in low light
+- Saves battery on OLED screens
+- Looks stunning!
+- Automatic theme persistence
+
+### Inspirational Quotes
+
+Get motivated when completing tasks!
+
+1. **Complete a task** by checking the box
+2. **Beautiful toast appears** with:
+   - Famous quote matched to your task category
+   - Picture/avatar of the author
+   - Celebration message 🎉
+3. **Quotes by category:**
+   - **Work:** Steve Jobs, Elon Musk, Bill Gates, tech leaders
+   - **Personal:** Tony Robbins, Oscar Wilde, philosophers
+   - **Health:** Buddha, fitness experts, health advocates
+   - **Learning:** Albert Einstein, Richard Feynman, educators
+   - **Creative:** Artists, designers, creative minds
+   - **Social:** MLK, Gandhi, community leaders
+
+**Example:**
+```
+✨ Inspiration
+
+[SJ] "The only way to do great work is to love what you do."
+     — Steve Jobs
+
+🎉 Task Completed!
+```
+
+Quotes appear for 8 seconds with smooth animations!
 
 ---
 

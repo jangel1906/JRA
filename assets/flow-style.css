@@ -110,3 +110,126 @@ input[type="checkbox"] {
         min-height: 44px;
     }
 }
+
+/* Dark Mode Theme */
+.theme-dark {
+    background-color: #1a1a2e !important;
+    color: #e2e8f0 !important;
+}
+
+.theme-dark .container-fluid {
+    background-color: #1a1a2e !important;
+}
+
+.theme-dark .card {
+    background-color: #25293c !important;
+    color: #e2e8f0 !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.theme-dark .task-card {
+    background-color: #25293c !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.theme-dark .task-card:hover {
+    box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+}
+
+.theme-dark .text-muted {
+    color: #94a3b8 !important;
+}
+
+.theme-dark .form-control,
+.theme-dark .form-select {
+    background-color: #2d3250 !important;
+    color: #e2e8f0 !important;
+    border-color: #3d4354 !important;
+}
+
+.theme-dark .form-control:focus,
+.theme-dark .form-select:focus {
+    background-color: #2d3250 !important;
+    border-color: #6366f1 !important;
+}
+
+.theme-dark .input-group-text {
+    background-color: #2d3250 !important;
+    color: #e2e8f0 !important;
+    border-color: #3d4354 !important;
+}
+
+.theme-dark .modal-content {
+    background-color: #25293c !important;
+    color: #e2e8f0 !important;
+}
+
+.theme-dark .modal-header {
+    border-bottom-color: #3d4354 !important;
+}
+
+.theme-dark .modal-footer {
+    border-top-color: #3d4354 !important;
+}
+
+.theme-dark .btn-light {
+    background-color: #2d3250 !important;
+    color: #e2e8f0 !important;
+    border-color: #3d4354 !important;
+}
+
+.theme-dark .btn-light:hover {
+    background-color: #3d4354 !important;
+}
+
+.theme-dark .btn-secondary {
+    background-color: #3d4354 !important;
+    border-color: #3d4354 !important;
+}
+
+.theme-dark .badge-light {
+    background-color: #2d3250 !important;
+    color: #e2e8f0 !important;
+}
+
+.theme-dark ::-webkit-scrollbar-track {
+    background: #25293c;
+}
+
+.theme-dark ::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+}
+
+/* Smooth theme transition */
+.theme-dark,
+.theme-dark .card,
+.theme-dark .task-card,
+.theme-dark .form-control,
+.theme-dark .form-select,
+.theme-dark .btn {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Theme toggle button animation */
+#theme-toggle {
+    transition: all 0.3s ease;
+}
+
+#theme-toggle:hover {
+    transform: rotate(20deg) scale(1.1);
+}
+
+#theme-icon {
+    transition: all 0.3s ease;
+}
+
+/* Celebration animation for completed tasks */
+@keyframes celebrate {
+    0%, 100% { transform: scale(1) rotate(0deg); }
+    25% { transform: scale(1.1) rotate(-5deg); }
+    75% { transform: scale(1.1) rotate(5deg); }
+}
+
+.celebrate {
+    animation: celebrate 0.5s ease-in-out;
+}

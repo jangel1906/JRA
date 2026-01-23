@@ -50,6 +50,66 @@ PRIORITIES = {
     4: {"name": "Low", "color": "#10b981"}
 }
 
+# Inspirational quotes by category
+QUOTES = {
+    "work": [
+        {"text": "The only way to do great work is to love what you do.", "author": "Steve Jobs", "avatar": "SJ", "color": "#007aff"},
+        {"text": "Innovation distinguishes between a leader and a follower.", "author": "Steve Jobs", "avatar": "SJ", "color": "#007aff"},
+        {"text": "Your work is going to fill a large part of your life, and the only way to be truly satisfied is to do what you believe is great work.", "author": "Steve Jobs", "avatar": "SJ", "color": "#007aff"},
+        {"text": "Success is a lousy teacher. It seduces smart people into thinking they can't lose.", "author": "Bill Gates", "avatar": "BG", "color": "#00a4ef"},
+        {"text": "When something is important enough, you do it even if the odds are not in your favor.", "author": "Elon Musk", "avatar": "EM", "color": "#e62117"},
+        {"text": "I think it's very important to have a feedback loop, where you're constantly thinking about what you've done and how you could be doing it better.", "author": "Elon Musk", "avatar": "EM", "color": "#e62117"},
+        {"text": "The best way to predict the future is to invent it.", "author": "Alan Kay", "avatar": "AK", "color": "#8b5cf6"},
+        {"text": "Code is like humor. When you have to explain it, it's bad.", "author": "Cory House", "avatar": "CH", "color": "#10b981"},
+    ],
+    "personal": [
+        {"text": "The only impossible journey is the one you never begin.", "author": "Tony Robbins", "avatar": "TR", "color": "#f59e0b"},
+        {"text": "Your time is limited, don't waste it living someone else's life.", "author": "Steve Jobs", "avatar": "SJ", "color": "#007aff"},
+        {"text": "Be yourself; everyone else is already taken.", "author": "Oscar Wilde", "avatar": "OW", "color": "#8b5cf6"},
+        {"text": "The unexamined life is not worth living.", "author": "Socrates", "avatar": "SO", "color": "#3b82f6"},
+        {"text": "Life is what happens when you're busy making other plans.", "author": "John Lennon", "avatar": "JL", "color": "#ef4444"},
+    ],
+    "health": [
+        {"text": "Take care of your body. It's the only place you have to live.", "author": "Jim Rohn", "avatar": "JR", "color": "#ec4899"},
+        {"text": "The greatest wealth is health.", "author": "Virgil", "avatar": "VI", "color": "#ec4899"},
+        {"text": "To keep the body in good health is a duty... otherwise we shall not be able to keep our mind strong and clear.", "author": "Buddha", "avatar": "BU", "color": "#f59e0b"},
+        {"text": "Health is not valued till sickness comes.", "author": "Thomas Fuller", "avatar": "TF", "color": "#ec4899"},
+        {"text": "The first wealth is health.", "author": "Ralph Waldo Emerson", "avatar": "RWE", "color": "#10b981"},
+    ],
+    "learning": [
+        {"text": "The important thing is not to stop questioning. Curiosity has its own reason for existing.", "author": "Albert Einstein", "avatar": "AE", "color": "#6366f1"},
+        {"text": "Live as if you were to die tomorrow. Learn as if you were to live forever.", "author": "Mahatma Gandhi", "avatar": "MG", "color": "#f59e0b"},
+        {"text": "Education is the most powerful weapon which you can use to change the world.", "author": "Nelson Mandela", "avatar": "NM", "color": "#14b8a6"},
+        {"text": "The beautiful thing about learning is that no one can take it away from you.", "author": "B.B. King", "avatar": "BBK", "color": "#8b5cf6"},
+        {"text": "Study hard what interests you the most in the most undisciplined, irreverent and original manner possible.", "author": "Richard Feynman", "avatar": "RF", "color": "#3b82f6"},
+        {"text": "An investment in knowledge pays the best interest.", "author": "Benjamin Franklin", "avatar": "BF", "color": "#10b981"},
+    ],
+    "creative": [
+        {"text": "Creativity is intelligence having fun.", "author": "Albert Einstein", "avatar": "AE", "color": "#6366f1"},
+        {"text": "The desire to create is one of the deepest yearnings of the human soul.", "author": "Dieter F. Uchtdorf", "avatar": "DU", "color": "#f59e0b"},
+        {"text": "Creativity takes courage.", "author": "Henri Matisse", "avatar": "HM", "color": "#ef4444"},
+        {"text": "Don't think. Thinking is the enemy of creativity.", "author": "Ray Bradbury", "avatar": "RB", "color": "#8b5cf6"},
+        {"text": "Every artist was first an amateur.", "author": "Ralph Waldo Emerson", "avatar": "RWE", "color": "#10b981"},
+        {"text": "Imagination is more important than knowledge.", "author": "Albert Einstein", "avatar": "AE", "color": "#6366f1"},
+    ],
+    "social": [
+        {"text": "Alone we can do so little; together we can do so much.", "author": "Helen Keller", "avatar": "HK", "color": "#06b6d4"},
+        {"text": "Coming together is a beginning; keeping together is progress; working together is success.", "author": "Henry Ford", "avatar": "HF", "color": "#3b82f6"},
+        {"text": "Be the change you wish to see in the world.", "author": "Mahatma Gandhi", "avatar": "MG", "color": "#f59e0b"},
+        {"text": "In the end, we will remember not the words of our enemies, but the silence of our friends.", "author": "Martin Luther King Jr.", "avatar": "MLK", "color": "#8b5cf6"},
+        {"text": "The function of leadership is to produce more leaders, not more followers.", "author": "Ralph Nader", "avatar": "RN", "color": "#10b981"},
+    ]
+}
+
+import random
+
+def get_random_quote(category):
+    """Get a random quote based on task category"""
+    if category in QUOTES:
+        return random.choice(QUOTES[category])
+    # Default quote if category not found
+    return {"text": "Great job! Keep up the excellent work!", "author": "Flow Team", "avatar": "✨", "color": "#6366f1"}
+
 def parse_natural_language(text):
     """Parse natural language task input"""
     data = {"description": text, "due_date": None, "priority": 3}
@@ -162,11 +222,16 @@ def create_task_card(task):
     })
 
 # App Layout
-app.layout = dbc.Container([
+app.layout = html.Div([
+    dbc.Container([
     # Data stores
     dcc.Store(id="tasks-store", data=[]),
     dcc.Store(id="filter-state", data={"category": "all", "search": ""}),
     dcc.Store(id="edit-task-store", data=None),
+    dcc.Store(id="theme-store", data="light"),
+
+    # Quote Toast Container
+    html.Div(id="quote-toast-container", style={"position": "fixed", "top": "20px", "right": "20px", "zIndex": "9999"}),
 
     # Edit Task Modal
     dbc.Modal([
@@ -228,9 +293,21 @@ app.layout = dbc.Container([
                     "backgroundClip": "text"
                 }),
                 html.P("Intelligent Task Management", className="text-muted mb-0")
-            ], className="text-center mb-4")
-        ])
-    ]),
+            ], className="text-center mb-0")
+        ], width=True),
+        dbc.Col([
+            html.Div([
+                dbc.Button(
+                    html.I(id="theme-icon", className="fas fa-moon"),
+                    id="theme-toggle",
+                    color="light",
+                    size="lg",
+                    className="rounded-circle",
+                    style={"width": "50px", "height": "50px"}
+                )
+            ], className="text-end")
+        ], width="auto")
+    ], className="mb-4", align="center"),
 
     # Stats
     dbc.Row([
@@ -375,7 +452,8 @@ app.layout = dbc.Container([
             html.Div(id="task-list")
         ], width=12, lg=8)
     ])
-], fluid=True, className="p-3 p-md-4", style={"backgroundColor": "#f8fafc", "minHeight": "100vh"})
+    ], fluid=True, className="p-3 p-md-4", style={"backgroundColor": "#f8fafc", "minHeight": "100vh"})
+], id="app-container", className="theme-light")
 
 # Callbacks
 
@@ -474,28 +552,96 @@ def update_tasks(tasks, view, search, category):
 
 @app.callback(
     Output("tasks-store", "data", allow_duplicate=True),
+    Output("quote-toast-container", "children"),
     Input({"type": "complete-task", "index": ALL}, "value"),
     State("tasks-store", "data"),
     prevent_initial_call=True
 )
 def complete_task(values, tasks):
-    """Mark task as completed"""
+    """Mark task as completed and show inspirational quote"""
     if not ctx.triggered:
-        return tasks
+        return tasks, None
 
     trigger = ctx.triggered[0]["prop_id"]
     if not trigger or ".value" not in trigger:
-        return tasks
+        return tasks, None
 
     task_id = json.loads(trigger.split(".")[0])["index"]
 
+    completed_category = None
     for task in tasks:
         if task["id"] == task_id:
             task["completed"] = True
             task["completed_at"] = datetime.now().isoformat()
+            completed_category = task.get("category", "work")
             break
 
-    return tasks
+    # Get a random quote based on the task category
+    if completed_category:
+        quote = get_random_quote(completed_category)
+
+        # Create a beautiful quote toast
+        quote_toast = dbc.Toast(
+            [
+                html.Div([
+                    html.Div([
+                        html.Div(
+                            quote["avatar"],
+                            style={
+                                "width": "60px",
+                                "height": "60px",
+                                "borderRadius": "50%",
+                                "backgroundColor": quote["color"],
+                                "color": "white",
+                                "display": "flex",
+                                "alignItems": "center",
+                                "justifyContent": "center",
+                                "fontSize": "20px",
+                                "fontWeight": "bold",
+                                "marginRight": "15px",
+                                "boxShadow": "0 4px 12px rgba(0,0,0,0.15)"
+                            }
+                        ),
+                        html.Div([
+                            html.P(f'"{quote["text"]}"', style={
+                                "fontSize": "15px",
+                                "fontStyle": "italic",
+                                "marginBottom": "8px",
+                                "lineHeight": "1.5"
+                            }),
+                            html.P(f"— {quote['author']}", style={
+                                "fontSize": "13px",
+                                "fontWeight": "600",
+                                "color": quote["color"],
+                                "marginBottom": "0"
+                            })
+                        ], style={"flex": "1"})
+                    ], style={"display": "flex", "alignItems": "start"}),
+                    html.Div("🎉 Task Completed!", style={
+                        "marginTop": "10px",
+                        "padding": "8px",
+                        "backgroundColor": "#10b98133",
+                        "borderRadius": "8px",
+                        "textAlign": "center",
+                        "fontWeight": "600",
+                        "color": "#10b981"
+                    })
+                ])
+            ],
+            header="✨ Inspiration",
+            is_open=True,
+            duration=8000,
+            icon="success",
+            style={
+                "minWidth": "400px",
+                "maxWidth": "500px",
+                "boxShadow": "0 10px 40px rgba(0,0,0,0.2)"
+            }
+        )
+
+        return tasks, quote_toast
+
+    return tasks, None
 
 @app.callback(
     Output("tasks-store", "data", allow_duplicate=True),
@@ -590,6 +736,27 @@ def save_edited_task(n_clicks, task_id, description, priority, category, due_dat
             break
 
     return tasks
+
+@app.callback(
+    Output("theme-store", "data"),
+    Output("theme-icon", "className"),
+    Input("theme-toggle", "n_clicks"),
+    State("theme-store", "data"),
+    prevent_initial_call=True
+)
+def toggle_theme(n_clicks, current_theme):
+    """Toggle between light and dark mode"""
+    new_theme = "dark" if current_theme == "light" else "light"
+    icon_class = "fas fa-sun" if new_theme == "dark" else "fas fa-moon"
+    return new_theme, icon_class
+
+@app.callback(
+    Output("app-container", "className"),
+    Input("theme-store", "data")
+)
+def apply_theme(theme):
+    """Apply theme class to container"""
+    return f"theme-{theme}"
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8052))
