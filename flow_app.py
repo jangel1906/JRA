@@ -221,9 +221,58 @@ def create_task_card(task):
         "transition": "all 0.3s ease"
     })
 
-# App Layout
-app.layout = html.Div([
+# Login Layout
+login_layout = html.Div([
     dbc.Container([
+        dbc.Row([
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardBody([
+                        html.Div([
+                            html.H2([
+                                html.Span("😇", className="angel-halo", style={"fontSize": "3rem", "marginRight": "10px"}),
+                                "Angel's Flow"
+                            ], className="text-center mb-1", style={
+                                "fontWeight": "800",
+                                "background": "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
+                                "WebkitBackgroundClip": "text",
+                                "WebkitTextFillColor": "transparent",
+                                "backgroundClip": "text"
+                            }),
+                            html.P("Intelligent Task Management", className="text-center text-muted mb-4"),
+                            dbc.Label("Username", className="fw-bold"),
+                            dbc.Input(
+                                id="login-username",
+                                type="text",
+                                placeholder="Enter your name",
+                                className="mb-3"
+                            ),
+                            dbc.Label("Password", className="fw-bold"),
+                            dbc.Input(
+                                id="login-password",
+                                type="password",
+                                placeholder="Enter password",
+                                className="mb-3"
+                            ),
+                            html.Div(id="login-error", className="mb-3"),
+                            dbc.Button(
+                                [html.I(className="fas fa-sign-in-alt me-2"), "Login"],
+                                id="login-btn",
+                                color="primary",
+                                className="w-100",
+                                size="lg"
+                            )
+                        ])
+                    ])
+                ], className="login-card")
+            ], width=12, md=6, lg=4)
+        ], justify="center", className="min-vh-100", align="center")
+    ], fluid=True, className="login-container")
+], id="login-container-main")
+
+# Main App Layout
+def create_main_layout():
+    return dbc.Container([
     # Data stores
     dcc.Store(id="tasks-store", data=[]),
     dcc.Store(id="filter-state", data={"category": "all", "search": ""}),
@@ -279,39 +328,13 @@ app.layout = html.Div([
         ])
     ], id="edit-modal", is_open=False, size="lg"),
 
-    # Reset Metrics Modal
-    dbc.Modal([
-        dbc.ModalHeader(dbc.ModalTitle("Reset Metrics")),
-        dbc.ModalBody([
-            html.P("Select which metrics you want to reset:", className="mb-3"),
-            dbc.Checklist(
-                id="reset-options",
-                options=[
-                    {"label": "Clear all completed tasks", "value": "completed"},
-                    {"label": "Reset streak counter", "value": "streak"}
-                ],
-                value=[],
-                className="mb-3"
-            ),
-            dbc.Alert(
-                "This action cannot be undone!",
-                color="warning",
-                className="mb-0"
-            )
-        ]),
-        dbc.ModalFooter([
-            dbc.Button("Cancel", id="cancel-reset-btn", color="secondary", className="me-2"),
-            dbc.Button("Reset Selected", id="confirm-reset-btn", color="danger")
-        ])
-    ], id="reset-modal", is_open=False),
-
     # Header
     dbc.Row([
         dbc.Col([
             html.Div([
                 html.H1([
-                    html.Span("✨ ", style={"fontSize": "2rem"}),
-                    "Flow"
+                    html.Span("😇", className="angel-halo", style={"fontSize": "2.5rem", "marginRight": "10px"}),
+                    "Angel's Flow"
                 ], className="mb-1", style={
                     "fontWeight": "800",
                     "background": "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
@@ -325,21 +348,18 @@ app.layout = html.Div([
         dbc.Col([
             html.Div([
                 dbc.Button(
-                    html.I(className="fas fa-redo"),
-                    id="reset-metrics-btn",
-                    color="light",
-                    size="lg",
-                    className="rounded-circle me-2",
-                    style={"width": "50px", "height": "50px"},
-                    title="Reset Metrics"
-                ),
-                dbc.Button(
                     html.I(id="theme-icon", className="fas fa-moon"),
                     id="theme-toggle",
                     color="light",
                     size="lg",
-                    className="rounded-circle",
+                    className="rounded-circle me-2",
                     style={"width": "50px", "height": "50px"}
+                ),
+                dbc.Button(
+                    [html.I(className="fas fa-sign-out-alt me-1"), html.Span(id="username-display", children="Logout")],
+                    id="logout-btn",
+                    color="light",
+                    size="sm"
                 )
             ], className="text-end")
         ], width="auto")
@@ -356,29 +376,45 @@ app.layout = html.Div([
                         html.Small("Active Tasks", className="text-muted")
                     ], className="text-center")
                 ])
-            ])
+            ], className="stat-card")
         ], width=6, md=3),
         dbc.Col([
             dbc.Card([
                 dbc.CardBody([
                     html.Div([
+                        dbc.Button(
+                            html.I(className="fas fa-times", style={"fontSize": "12px"}),
+                            id="reset-completed-btn",
+                            color="light",
+                            size="sm",
+                            className="reset-tile-btn",
+                            title="Clear completed tasks"
+                        ),
                         html.I(className="fas fa-check-circle fa-2x mb-2", style={"color": "#10b981"}),
                         html.H3(id="stat-completed", children="0", className="mb-0"),
                         html.Small("Completed", className="text-muted")
-                    ], className="text-center")
+                    ], className="text-center", style={"position": "relative"})
                 ])
-            ])
+            ], className="stat-card")
         ], width=6, md=3),
         dbc.Col([
             dbc.Card([
                 dbc.CardBody([
                     html.Div([
+                        dbc.Button(
+                            html.I(className="fas fa-times", style={"fontSize": "12px"}),
+                            id="reset-streak-btn",
+                            color="light",
+                            size="sm",
+                            className="reset-tile-btn",
+                            title="Reset streak"
+                        ),
                         html.I(className="fas fa-fire fa-2x mb-2", style={"color": "#ef4444"}),
                         html.H3(id="stat-streak", children="0", className="mb-0"),
                         html.Small("Day Streak", className="text-muted")
-                    ], className="text-center")
+                    ], className="text-center", style={"position": "relative"})
                 ])
-            ])
+            ], className="stat-card")
         ], width=6, md=3),
         dbc.Col([
             dbc.Card([
@@ -389,7 +425,7 @@ app.layout = html.Div([
                         html.Small("Completion Rate", className="text-muted")
                     ], className="text-center")
                 ])
-            ])
+            ], className="stat-card")
         ], width=6, md=3)
     ], className="mb-4 g-3"),
 
@@ -489,6 +525,12 @@ app.layout = html.Div([
         ], width=12, lg=8)
     ])
     ], fluid=True, className="p-3 p-md-4", style={"backgroundColor": "#f8fafc", "minHeight": "100vh"})
+
+# Actual app layout with conditional rendering
+app.layout = html.Div([
+    dcc.Store(id="login-store", data={"logged_in": False, "username": ""}),
+    dcc.Store(id="theme-store", data="light"),
+    html.Div(id="page-content")
 ], id="app-container", className="theme-light")
 
 # Callbacks
@@ -807,46 +849,82 @@ def apply_theme(theme):
     return f"theme-{theme}"
 
 @app.callback(
-    Output("reset-modal", "is_open"),
-    Input("reset-metrics-btn", "n_clicks"),
-    Input("cancel-reset-btn", "n_clicks"),
-    Input("confirm-reset-btn", "n_clicks"),
-    State("reset-modal", "is_open"),
+    Output("tasks-store", "data", allow_duplicate=True),
+    Input("reset-completed-btn", "n_clicks"),
+    State("tasks-store", "data"),
     prevent_initial_call=True
 )
-def toggle_reset_modal(open_clicks, cancel_clicks, confirm_clicks, is_open):
-    """Toggle reset metrics modal"""
-    if ctx.triggered_id == "reset-metrics-btn":
-        return True
-    return False
+def reset_completed(n_clicks, tasks):
+    """Clear all completed tasks"""
+    if not n_clicks:
+        return tasks
+    # Remove all completed tasks
+    return [t for t in tasks if not t.get("completed")]
 
 @app.callback(
-    Output("tasks-store", "data", allow_duplicate=True),
     Output("streak-store", "data", allow_duplicate=True),
-    Output("reset-options", "value"),
-    Input("confirm-reset-btn", "n_clicks"),
-    State("reset-options", "value"),
-    State("tasks-store", "data"),
-    State("streak-store", "data"),
+    Input("reset-streak-btn", "n_clicks"),
     prevent_initial_call=True
 )
-def reset_metrics(n_clicks, reset_options, tasks, streak):
-    """Reset selected metrics"""
-    if not n_clicks or not reset_options:
-        return tasks, streak, []
+def reset_streak(n_clicks):
+    """Reset streak counter"""
+    if not n_clicks:
+        return 0
+    return 0
 
-    new_tasks = tasks
-    new_streak = streak
+@app.callback(
+    Output("page-content", "children"),
+    Input("login-store", "data")
+)
+def display_page(login_data):
+    """Display login page or main app based on login status"""
+    if login_data.get("logged_in"):
+        return create_main_layout()
+    return login_layout
 
-    if "completed" in reset_options:
-        # Remove all completed tasks
-        new_tasks = [t for t in tasks if not t.get("completed")]
+@app.callback(
+    Output("login-store", "data", allow_duplicate=True),
+    Output("login-error", "children"),
+    Input("login-btn", "n_clicks"),
+    State("login-username", "value"),
+    State("login-password", "value"),
+    prevent_initial_call=True
+)
+def handle_login(n_clicks, username, password):
+    """Handle login authentication"""
+    if not n_clicks:
+        return {"logged_in": False, "username": ""}, None
 
-    if "streak" in reset_options:
-        # Reset streak to 0
-        new_streak = 0
+    if not username or not username.strip():
+        return {"logged_in": False, "username": ""}, dbc.Alert("Please enter your name", color="warning", duration=3000)
 
-    return new_tasks, new_streak, []
+    # Simple authentication (for demo - accept any password with username)
+    # In production, you'd validate against a database
+    if password and len(password) >= 4:
+        return {"logged_in": True, "username": username.strip()}, None
+
+    return {"logged_in": False, "username": ""}, dbc.Alert("Password must be at least 4 characters", color="danger", duration=3000)
+
+@app.callback(
+    Output("login-store", "data", allow_duplicate=True),
+    Input("logout-btn", "n_clicks"),
+    prevent_initial_call=True
+)
+def handle_logout(n_clicks):
+    """Handle logout"""
+    if not n_clicks:
+        return {"logged_in": False, "username": ""}
+    return {"logged_in": False, "username": ""}
+
+@app.callback(
+    Output("username-display", "children"),
+    Input("login-store", "data")
+)
+def update_username_display(login_data):
+    """Update username in header"""
+    if login_data.get("logged_in") and login_data.get("username"):
+        return f"{login_data['username']} - Logout"
+    return "Logout"
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8052))

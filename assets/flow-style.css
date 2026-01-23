@@ -233,3 +233,81 @@ input[type="checkbox"] {
 .celebrate {
     animation: celebrate 0.5s ease-in-out;
 }
+
+/* Stat cards with reset buttons */
+.stat-card {
+    position: relative;
+}
+
+.reset-tile-btn {
+    position: absolute !important;
+    top: 8px;
+    right: 8px;
+    width: 24px !important;
+    height: 24px !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 10;
+    background-color: rgba(239, 68, 68, 0.1) !important;
+    border: 1px solid rgba(239, 68, 68, 0.3) !important;
+}
+
+.reset-tile-btn:hover {
+    background-color: rgba(239, 68, 68, 0.2) !important;
+    transform: scale(1.1);
+}
+
+.stat-card:hover .reset-tile-btn {
+    opacity: 1;
+}
+
+.theme-dark .reset-tile-btn {
+    background-color: rgba(239, 68, 68, 0.2) !important;
+    border-color: rgba(239, 68, 68, 0.4) !important;
+}
+
+/* Angel halo animation */
+@keyframes haloGlow {
+    0%, 100% {
+        filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.6));
+        transform: translateY(0px);
+    }
+    50% {
+        filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.8));
+        transform: translateY(-2px);
+    }
+}
+
+.angel-halo {
+    animation: haloGlow 2s ease-in-out infinite;
+    display: inline-block;
+}
+
+/* Login screen */
+.login-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.login-card {
+    max-width: 400px;
+    width: 100%;
+    padding: 2rem;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    background: white;
+    animation: fadeIn 0.5s ease-out;
+}
+
+.theme-dark .login-container {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+}
+
+.theme-dark .login-card {
+    background-color: #25293c;
+}
