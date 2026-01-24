@@ -554,6 +554,10 @@ app.layout = html.Div([
 @app.callback(
     Output("tasks-store", "data"),
     Output("add-feedback", "children"),
+    Output("task-input", "value"),
+    Output("task-priority", "value"),
+    Output("task-category", "value"),
+    Output("task-due-date", "value"),
     Input("add-task-btn", "n_clicks"),
     State("task-input", "value"),
     State("task-priority", "value"),
@@ -565,7 +569,7 @@ app.layout = html.Div([
 def add_task(n, description, priority, category, due_date, tasks):
     """Add a new task"""
     if not description or not description.strip():
-        return tasks, dbc.Alert("Please enter a task!", color="warning", duration=3000)
+        return tasks, dbc.Alert("Please enter a task!", color="warning", duration=3000), description, priority, category, due_date
 
     # Parse natural language
     parsed = parse_natural_language(description)
@@ -586,7 +590,7 @@ def add_task(n, description, priority, category, due_date, tasks):
         [html.I(className="fas fa-check-circle me-2"), "Task added!"],
         color="success",
         duration=3000
-    )
+    ), "", 3, "personal", ""
 
 @app.callback(
     Output("task-list", "children"),
