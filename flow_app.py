@@ -283,12 +283,12 @@ login_layout = html.Div([
 # Main App Layout
 def create_main_layout():
     return dbc.Container([
-    # Data stores
-    dcc.Store(id="tasks-store", data=[]),
+    # Data stores with persistent storage
+    dcc.Store(id="tasks-store", data=[], storage_type="local"),
     dcc.Store(id="filter-state", data={"category": "all", "search": ""}),
     dcc.Store(id="edit-task-store", data=None),
-    dcc.Store(id="theme-store", data="light"),
-    dcc.Store(id="streak-store", data=0),
+    dcc.Store(id="theme-store", data="light", storage_type="local"),
+    dcc.Store(id="streak-store", data=0, storage_type="local"),
 
     # Quote Toast Container
     html.Div(id="quote-toast-container", style={"position": "fixed", "top": "20px", "right": "20px", "zIndex": "9999"}),
@@ -544,8 +544,8 @@ def create_main_layout():
 
 # Actual app layout with conditional rendering
 app.layout = html.Div([
-    dcc.Store(id="login-store", data={"logged_in": False, "username": ""}),
-    dcc.Store(id="theme-store", data="light"),
+    dcc.Store(id="login-store", data={"logged_in": False, "username": ""}, storage_type="local"),
+    dcc.Store(id="theme-store", data="light", storage_type="local"),
     html.Div(id="page-content")
 ], id="app-container", className="theme-light")
 
