@@ -653,7 +653,24 @@ def create_main_layout():
 app.layout = html.Div([
     dcc.Store(id="login-store", data={"logged_in": False, "username": ""}, storage_type="local"),
     dcc.Store(id="theme-store", data="light", storage_type="local"),
-    html.Div(id="page-content")
+    html.Div(id="page-content"),
+    # Clear old localStorage data when using cloud sync
+    html.Script("""
+        if (""" + str(USE_CLOUD_SYNC).lower() + """) {
+            // Clear old localStorage data that's now using memory storage
+            const keysToRemove = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && (key.includes('tasks-store') || key.includes('trash-store') || key.includes('streak-store'))) {
+                    keysToRemove.push(key);
+                }
+            }
+            keysToRemove.forEach(key => {
+                console.log('Clearing old localStorage key:', key);
+                localStorage.removeItem(key);
+            });
+        }
+    """) if USE_CLOUD_SYNC else html.Div()
 ], id="app-container", className="theme-light")
 
 # Callbacks
@@ -708,11 +725,22 @@ def add_task(n, description, priority, category, due_date, is_recurring, recurri
     tasks.append(new_task)
 
     # Save to cloud if logged in
+    print(f"\n🔍 ADD TASK DEBUG:")
+    print(f"   USE_CLOUD_SYNC: {USE_CLOUD_SYNC}")
+    print(f"   login_data: {login_data}")
+    print(f"   Task ID: {new_task.get('id')}")
+    print(f"   Task description: {new_task.get('description')}")
+
     if USE_CLOUD_SYNC and login_data.get("logged_in"):
         username = login_data.get("username")
         if username:
-            supabase_db.save_task(username, new_task)
-            print(f"☁️  Saved task to cloud for {username}")
+            print(f"   ✅ Attempting cloud save for user: {username}")
+            save_result = supabase_db.save_task(username, new_task)
+            print(f"   ☁️  Cloud save result: {save_result}")
+        else:
+            print(f"   ⚠️  No username in login_data")
+    else:
+        print(f"   ❌ Cloud save skipped - USE_CLOUD_SYNC:{USE_CLOUD_SYNC}, logged_in:{login_data.get('logged_in')}")
 
     return tasks, dbc.Alert(
         [html.I(className="fas fa-check-circle me-2"), "Task added!" + (" (Recurring)" if is_recurring else "")],
@@ -1278,16 +1306,25 @@ def update_username_display(login_data):
 )
 def load_cloud_data(login_data, local_tasks, local_trash, local_streak):
     """Load user data from cloud when logged in"""
+    print(f"\n🔍 LOAD CLOUD DATA DEBUG:")
+    print(f"   login_data: {login_data}")
+    print(f"   USE_CLOUD_SYNC: {USE_CLOUD_SYNC}")
+    print(f"   local_tasks count: {len(local_tasks) if local_tasks else 0}")
+
     if not login_data.get("logged_in") or not USE_CLOUD_SYNC:
+        print(f"   ❌ Skipping cloud load - logged_in:{login_data.get('logged_in')}, USE_CLOUD_SYNC:{USE_CLOUD_SYNC}")
         return local_tasks, local_trash, local_streak
 
     username = login_data.get("username")
     if not username:
+        print(f"   ❌ No username found")
         return local_tasks, local_trash, local_streak
 
     try:
         # Load tasks from cloud
+        print(f"   📡 Fetching tasks from Supabase for user: {username}")
         cloud_tasks = supabase_db.get_user_tasks(username)
+        print(f"   📦 Retrieved {len(cloud_tasks)} tasks from cloud")
 
         # Load trash from cloud
         cloud_trash = supabase_db.get_user_trash(username)
@@ -1298,15 +1335,21 @@ def load_cloud_data(login_data, local_tasks, local_trash, local_streak):
 
         # If cloud is empty but we have local data, sync local to cloud (first login)
         if not cloud_tasks and local_tasks:
-            print(f"📤 Migrating {len(local_tasks)} local tasks to cloud...")
+            print(f"   📤 Migrating {len(local_tasks)} local tasks to cloud...")
             supabase_db.sync_local_to_cloud(username, local_tasks)
             cloud_tasks = local_tasks
 
-        print(f"📥 Loaded {len(cloud_tasks)} tasks from cloud for {username}")
+        print(f"   ✅ Loaded {len(cloud_tasks)} tasks from cloud for {username}")
+        if cloud_tasks:
+            for task in cloud_tasks:
+                print(f"      - {task.get('description')} (ID: {task.get('id')[:8]}...)")
+
         return cloud_tasks, cloud_trash, cloud_streak
 
     except Exception as e:
-        print(f"⚠️  Error loading cloud data: {e}")
+        print(f"   ⚠️  Error loading cloud data: {e}")
+        import traceback
+        traceback.print_exc()
         return local_tasks, local_trash, local_streak
 
 if __name__ == "__main__":
