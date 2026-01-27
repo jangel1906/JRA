@@ -1294,16 +1294,28 @@ def display_page(login_data):
 )
 def handle_login(n_clicks, username, password):
     """Handle login authentication"""
+    print(f"\n🔐 LOGIN ATTEMPT:")
+    print(f"   n_clicks: {n_clicks}")
+    print(f"   username received: '{username}'")
+    print(f"   password received: '{password}'")
+
     if not n_clicks:
+        print(f"   ❌ No clicks, returning not logged in")
         return {"logged_in": False, "username": ""}, None
 
     if not username or not username.strip():
+        print(f"   ❌ Empty username")
         return {"logged_in": False, "username": ""}, dbc.Alert("Please enter your username", color="warning", duration=3000)
 
     # Authenticate with specific credentials
+    print(f"   Checking: '{username.strip()}' == 'jangel1906': {username.strip() == 'jangel1906'}")
+    print(f"   Checking: '{password}' == 'Tokyo1913@': {password == 'Tokyo1913@'}")
+
     if username.strip() == "jangel1906" and password == "Tokyo1913@":
+        print(f"   ✅ LOGIN SUCCESS! Setting logged_in=True, username=jangel1906")
         return {"logged_in": True, "username": "jangel1906"}, None
 
+    print(f"   ❌ LOGIN FAILED! Invalid credentials")
     return {"logged_in": False, "username": ""}, dbc.Alert("Invalid username or password", color="danger", duration=3000)
 
 @app.callback(
@@ -1323,8 +1335,16 @@ def handle_logout(n_clicks):
 )
 def update_username_display(login_data):
     """Update username in header"""
-    if login_data.get("logged_in") and login_data.get("username"):
-        return f"{login_data['username']} - Logout"
+    print(f"\n👤 UPDATE USERNAME DISPLAY:")
+    print(f"   login_data: {login_data}")
+    print(f"   logged_in: {login_data.get('logged_in') if login_data else None}")
+    print(f"   username: {login_data.get('username') if login_data else None}")
+
+    if login_data and login_data.get("logged_in") and login_data.get("username"):
+        result = f"{login_data['username']} - Logout"
+        print(f"   ✅ Returning: '{result}'")
+        return result
+    print(f"   ❌ Returning: 'Logout'")
     return "Logout"
 
 # Cloud Sync Callbacks
