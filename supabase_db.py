@@ -55,7 +55,9 @@ def save_task(user_id, task):
         return False
 
     try:
+        # Prepare data for upsert
         data = {
+            'id': task.get('id'),  # Include the ID!
             'user_id': user_id,
             'description': task['description'],
             'priority': task['priority'],
@@ -65,20 +67,16 @@ def save_task(user_id, task):
             'completed': task.get('completed', False),
             'completed_at': task.get('completed_at'),
             'recurring': task.get('recurring', False),
-            'recurring_freq': task.get('recurring_freq')
+            'recurring_freq': task.get('recurring_freq'),
+            'updated_at': datetime.now().isoformat()
         }
 
-        # Check if task exists (by checking if we have an id that's a UUID)
-        if 'id' in task and len(str(task['id'])) > 30:  # UUID format
-            # Update existing
-            supabase.table('tasks').update(data).eq('id', task['id']).execute()
-        else:
-            # Insert new
-            supabase.table('tasks').insert(data).execute()
-
+        # Use upsert to insert or update
+        supabase.table('tasks').upsert(data).execute()
+        print(f"✅ Saved task {task.get('id')[:8]}... to cloud")
         return True
     except Exception as e:
-        print(f"Error saving task: {e}")
+        print(f"❌ Error saving task: {e}")
         return False
 
 def delete_task_from_cloud(user_id, task_id):
