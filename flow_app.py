@@ -23,12 +23,31 @@ SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 USE_CLOUD_SYNC = bool(SUPABASE_URL and SUPABASE_KEY)
 
+print("\n" + "="*60)
+print("🔍 CLOUD SYNC DIAGNOSTIC")
+print("="*60)
+print(f"SUPABASE_URL exists: {bool(SUPABASE_URL)}")
+print(f"SUPABASE_KEY exists: {bool(SUPABASE_KEY)}")
+print(f"USE_CLOUD_SYNC: {USE_CLOUD_SYNC}")
+if SUPABASE_URL:
+    print(f"SUPABASE_URL value: {SUPABASE_URL[:30]}...")
+if SUPABASE_KEY:
+    print(f"SUPABASE_KEY value: {SUPABASE_KEY[:20]}...")
+print("="*60 + "\n")
+
 if USE_CLOUD_SYNC:
     try:
         from supabase import create_client, Client
         import supabase_db
         supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
         print("✅ Cloud sync enabled with Supabase")
+        print(f"✅ Supabase client created successfully")
+        # Test connection
+        try:
+            test_result = supabase.table('tasks').select('count', count='exact').limit(0).execute()
+            print(f"✅ Successfully connected to Supabase database!")
+        except Exception as test_e:
+            print(f"⚠️  Supabase connection test failed: {test_e}")
     except Exception as e:
         print(f"⚠️  Supabase connection failed: {e}")
         print("📦 Falling back to localStorage")
@@ -427,7 +446,13 @@ def create_main_layout():
                         "backgroundClip": "text"
                     })
                 ], className="halo-container", style={"display": "inline-block", "position": "relative"}),
-                html.P("Intelligent Task Management", className="text-muted mb-0")
+                html.P("Intelligent Task Management", className="text-muted mb-0"),
+                html.Div([
+                    dbc.Badge([
+                        html.I(className="fas fa-cloud" + ("-check" if USE_CLOUD_SYNC else "-slash") + " me-1"),
+                        "Cloud Sync " + ("ON" if USE_CLOUD_SYNC else "OFF")
+                    ], color="success" if USE_CLOUD_SYNC else "warning", className="mt-2")
+                ], className="text-center")
             ], className="text-center mb-0")
         ], width=True),
         dbc.Col([
