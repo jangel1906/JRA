@@ -289,6 +289,8 @@ input[type="checkbox"] {
 .halo-container {
     position: relative;
     display: inline-block;
+    width: auto;
+    min-width: 280px;
 }
 
 .custom-halo {
@@ -429,13 +431,23 @@ input[type="checkbox"] {
 }
 
 .login-card {
-    max-width: 400px;
+    max-width: 450px;
+    min-width: 400px;
     width: 100%;
-    padding: 2rem;
+    padding: 3rem;
     border-radius: 20px;
     box-shadow: 0 20px 60px rgba(0,0,0,0.3);
     background: white;
     animation: fadeIn 0.5s ease-out;
+}
+
+/* Mobile responsive for login */
+@media (max-width: 768px) {
+    .login-card {
+        max-width: 90%;
+        min-width: unset;
+        padding: 2rem;
+    }
 }
 
 .theme-dark .login-container {
