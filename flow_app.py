@@ -1271,6 +1271,15 @@ def reset_streak(n_clicks):
 )
 def display_page(login_data):
     """Display login page or main app based on login status"""
+    # When cloud sync is enabled, require login
+    if USE_CLOUD_SYNC:
+        if login_data and login_data.get("logged_in") and login_data.get("username"):
+            print(f"✅ User logged in: {login_data.get('username')}")
+            return create_main_layout()
+        else:
+            print(f"❌ User not logged in, showing login page. login_data: {login_data}")
+            return login_layout
+    # Without cloud sync, allow access without login
     if login_data.get("logged_in"):
         return create_main_layout()
     return login_layout
