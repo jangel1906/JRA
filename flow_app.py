@@ -676,17 +676,19 @@ def create_main_layout():
 
 # Actual app layout with conditional rendering
 app.layout = html.Div([
-    dcc.Store(id="login-store", data={"logged_in": False, "username": ""}, storage_type="local"),
+    # When cloud sync is ON, use memory storage for login (requires fresh login each session)
+    # When cloud sync is OFF, use local storage (persists login)
+    dcc.Store(id="login-store", data={"logged_in": False, "username": ""}, storage_type="memory" if USE_CLOUD_SYNC else "local"),
     dcc.Store(id="theme-store", data="light", storage_type="local"),
     html.Div(id="page-content"),
     # Clear old localStorage data when using cloud sync
     html.Script("""
         if (""" + str(USE_CLOUD_SYNC).lower() + """) {
-            // Clear old localStorage data that's now using memory storage
+            // Clear ALL app localStorage data to force fresh login
             const keysToRemove = [];
             for (let i = 0; i < localStorage.length; i++) {
                 const key = localStorage.key(i);
-                if (key && (key.includes('tasks-store') || key.includes('trash-store') || key.includes('streak-store'))) {
+                if (key && (key.includes('tasks-store') || key.includes('trash-store') || key.includes('streak-store') || key.includes('login-store'))) {
                     keysToRemove.push(key);
                 }
             }
@@ -694,6 +696,7 @@ app.layout = html.Div([
                 console.log('Clearing old localStorage key:', key);
                 localStorage.removeItem(key);
             });
+            console.log('✅ Cleared all app localStorage - fresh start with cloud sync');
         }
     """) if USE_CLOUD_SYNC else html.Div()
 ], id="app-container", className="theme-light")
