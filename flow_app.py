@@ -26,6 +26,7 @@ USE_CLOUD_SYNC = bool(SUPABASE_URL and SUPABASE_KEY)
 if USE_CLOUD_SYNC:
     try:
         from supabase import create_client, Client
+        import supabase_db
         supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
         print("✅ Cloud sync enabled with Supabase")
     except Exception as e:
@@ -681,9 +682,10 @@ def toggle_recurring_options(is_recurring):
     State("task-recurring-toggle", "value"),
     State("task-recurring-freq", "value"),
     State("tasks-store", "data"),
+    State("login-store", "data"),
     prevent_initial_call=True
 )
-def add_task(n, description, priority, category, due_date, is_recurring, recurring_freq, tasks):
+def add_task(n, description, priority, category, due_date, is_recurring, recurring_freq, tasks, login_data):
     """Add a new task"""
     if not description or not description.strip():
         return tasks, dbc.Alert("Please enter a task!", color="warning", duration=3000), description, priority, category, due_date, is_recurring
@@ -704,6 +706,13 @@ def add_task(n, description, priority, category, due_date, is_recurring, recurri
     }
 
     tasks.append(new_task)
+
+    # Save to cloud if logged in
+    if USE_CLOUD_SYNC and login_data.get("logged_in"):
+        username = login_data.get("username")
+        if username:
+            supabase_db.save_task(username, new_task)
+            print(f"☁️  Saved task to cloud for {username}")
 
     return tasks, dbc.Alert(
         [html.I(className="fas fa-check-circle me-2"), "Task added!" + (" (Recurring)" if is_recurring else "")],
@@ -800,9 +809,10 @@ def update_tasks(tasks, trash, view, search, category, streak, trash_clicks):
     Input({"type": "complete-task", "index": ALL}, "value"),
     State("tasks-store", "data"),
     State("streak-store", "data"),
+    State("login-store", "data"),
     prevent_initial_call=True
 )
-def complete_task(values, tasks, current_streak):
+def complete_task(values, tasks, current_streak, login_data):
     """Mark task as completed and show inspirational quote"""
     if not ctx.triggered:
         return tasks, None, current_streak
@@ -865,6 +875,28 @@ def complete_task(values, tasks, current_streak):
                 pass
 
         tasks.append(next_task)
+
+        # Save next occurrence to cloud
+        if USE_CLOUD_SYNC and login_data.get("logged_in"):
+            username = login_data.get("username")
+            if username:
+                supabase_db.save_task(username, next_task)
+
+    # Save completed task to cloud
+    if USE_CLOUD_SYNC and login_data.get("logged_in"):
+        username = login_data.get("username")
+        if username:
+            completed_task = next((t for t in tasks if t["id"] == task_id), None)
+            if completed_task:
+                supabase_db.save_task(username, completed_task)
+                print(f"☁️  Updated completed task in cloud for {username}")
+
+    # Update streak in cloud
+    new_streak = current_streak + 1
+    if USE_CLOUD_SYNC and login_data.get("logged_in"):
+        username = login_data.get("username")
+        if username:
+            supabase_db.update_user_stats(username, streak=new_streak)
 
     # Get a random quote based on the task category
     if completed_category:
@@ -929,11 +961,9 @@ def complete_task(values, tasks, current_streak):
             }
         )
 
-        # Increment streak when task is completed
-        new_streak = current_streak + 1
         return tasks, quote_toast, new_streak
 
-    return tasks, None, current_streak
+    return tasks, None, new_streak
 
 @app.callback(
     Output("tasks-store", "data", allow_duplicate=True),
@@ -941,9 +971,10 @@ def complete_task(values, tasks, current_streak):
     Input({"type": "delete-task", "index": ALL}, "n_clicks"),
     State("tasks-store", "data"),
     State("trash-store", "data"),
+    State("login-store", "data"),
     prevent_initial_call=True
 )
-def delete_task(n_clicks, tasks, trash):
+def delete_task(n_clicks, tasks, trash, login_data):
     """Move task to trash"""
     if not ctx.triggered or not any(n_clicks):
         return tasks, trash
@@ -964,6 +995,14 @@ def delete_task(n_clicks, tasks, trash):
             trash = []
         trash.append(task_to_delete)
         tasks = [t for t in tasks if t["id"] != task_id]
+
+        # Save to cloud trash and delete from cloud tasks
+        if USE_CLOUD_SYNC and login_data.get("logged_in"):
+            username = login_data.get("username")
+            if username:
+                supabase_db.save_to_trash(username, task_to_delete)
+                supabase_db.delete_task_from_cloud(username, task_id)
+                print(f"☁️  Moved task to cloud trash for {username}")
 
     return tasks, trash
 
@@ -1026,21 +1065,31 @@ def populate_edit_modal(task_id, tasks):
     State("edit-task-category", "value"),
     State("edit-task-due-date", "value"),
     State("tasks-store", "data"),
+    State("login-store", "data"),
     prevent_initial_call=True
 )
-def save_edited_task(n_clicks, task_id, description, priority, category, due_date, tasks):
+def save_edited_task(n_clicks, task_id, description, priority, category, due_date, tasks, login_data):
     """Save edited task"""
     if not n_clicks or not task_id:
         return tasks
 
     # Find and update the task
+    updated_task = None
     for task in tasks:
         if task["id"] == task_id:
             task["description"] = description.strip() if description else task["description"]
             task["priority"] = int(priority)
             task["category"] = category
             task["due_date"] = due_date if due_date else None
+            updated_task = task
             break
+
+    # Save to cloud
+    if updated_task and USE_CLOUD_SYNC and login_data.get("logged_in"):
+        username = login_data.get("username")
+        if username:
+            supabase_db.save_task(username, updated_task)
+            print(f"☁️  Updated task in cloud for {username}")
 
     return tasks
 
@@ -1063,9 +1112,10 @@ def toggle_theme(n_clicks, current_theme):
     Input({"type": "restore-task", "index": ALL}, "n_clicks"),
     State("tasks-store", "data"),
     State("trash-store", "data"),
+    State("login-store", "data"),
     prevent_initial_call=True
 )
-def restore_task(n_clicks, tasks, trash):
+def restore_task(n_clicks, tasks, trash, login_data):
     """Restore task from trash"""
     if not ctx.triggered or not any(n_clicks):
         return tasks, trash
@@ -1075,16 +1125,27 @@ def restore_task(n_clicks, tasks, trash):
 
     # Find the task in trash and restore it
     task_to_restore = None
+    trash_item_id = None
     for task in trash:
-        if task["id"] == task_id:
+        if task["id"] == task_id or task.get("task_id") == task_id:
             task_to_restore = task.copy()
+            trash_item_id = task.get("id")  # Cloud trash ID
             if "deleted_at" in task_to_restore:
                 del task_to_restore["deleted_at"]
             break
 
     if task_to_restore:
         tasks.append(task_to_restore)
-        trash = [t for t in trash if t["id"] != task_id]
+        trash = [t for t in trash if t["id"] != task_id and t.get("task_id") != task_id]
+
+        # Restore in cloud
+        if USE_CLOUD_SYNC and login_data.get("logged_in"):
+            username = login_data.get("username")
+            if username:
+                supabase_db.save_task(username, task_to_restore)
+                if trash_item_id:
+                    supabase_db.delete_from_trash(username, trash_item_id)
+                print(f"☁️  Restored task from cloud trash for {username}")
 
     return tasks, trash
 
@@ -1092,9 +1153,10 @@ def restore_task(n_clicks, tasks, trash):
     Output("trash-store", "data", allow_duplicate=True),
     Input({"type": "permanent-delete-task", "index": ALL}, "n_clicks"),
     State("trash-store", "data"),
+    State("login-store", "data"),
     prevent_initial_call=True
 )
-def permanent_delete_task(n_clicks, trash):
+def permanent_delete_task(n_clicks, trash, login_data):
     """Permanently delete task from trash"""
     if not ctx.triggered or not any(n_clicks):
         return trash
@@ -1102,7 +1164,20 @@ def permanent_delete_task(n_clicks, trash):
     trigger = ctx.triggered[0]["prop_id"]
     task_id = json.loads(trigger.split(".")[0])["index"]
 
-    trash = [t for t in trash if t["id"] != task_id]
+    # Delete from cloud trash
+    if USE_CLOUD_SYNC and login_data.get("logged_in"):
+        username = login_data.get("username")
+        if username:
+            # Find the cloud trash ID
+            for item in trash:
+                if item["id"] == task_id or item.get("task_id") == task_id:
+                    cloud_id = item.get("id")
+                    if cloud_id:
+                        supabase_db.delete_from_trash(username, cloud_id)
+                        print(f"☁️  Permanently deleted from cloud trash for {username}")
+                    break
+
+    trash = [t for t in trash if t["id"] != task_id and t.get("task_id") != task_id]
     return trash
 
 @app.callback(
@@ -1189,6 +1264,50 @@ def update_username_display(login_data):
     if login_data.get("logged_in") and login_data.get("username"):
         return f"{login_data['username']} - Logout"
     return "Logout"
+
+# Cloud Sync Callbacks
+@app.callback(
+    Output("tasks-store", "data", allow_duplicate=True),
+    Output("trash-store", "data", allow_duplicate=True),
+    Output("streak-store", "data", allow_duplicate=True),
+    Input("login-store", "data"),
+    State("tasks-store", "data"),
+    State("trash-store", "data"),
+    State("streak-store", "data"),
+    prevent_initial_call=True
+)
+def load_cloud_data(login_data, local_tasks, local_trash, local_streak):
+    """Load user data from cloud when logged in"""
+    if not login_data.get("logged_in") or not USE_CLOUD_SYNC:
+        return local_tasks, local_trash, local_streak
+
+    username = login_data.get("username")
+    if not username:
+        return local_tasks, local_trash, local_streak
+
+    try:
+        # Load tasks from cloud
+        cloud_tasks = supabase_db.get_user_tasks(username)
+
+        # Load trash from cloud
+        cloud_trash = supabase_db.get_user_trash(username)
+
+        # Load stats from cloud
+        stats = supabase_db.get_user_stats(username)
+        cloud_streak = stats.get('streak', 0)
+
+        # If cloud is empty but we have local data, sync local to cloud (first login)
+        if not cloud_tasks and local_tasks:
+            print(f"📤 Migrating {len(local_tasks)} local tasks to cloud...")
+            supabase_db.sync_local_to_cloud(username, local_tasks)
+            cloud_tasks = local_tasks
+
+        print(f"📥 Loaded {len(cloud_tasks)} tasks from cloud for {username}")
+        return cloud_tasks, cloud_trash, cloud_streak
+
+    except Exception as e:
+        print(f"⚠️  Error loading cloud data: {e}")
+        return local_tasks, local_trash, local_streak
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8052))
