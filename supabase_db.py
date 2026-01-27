@@ -52,6 +52,7 @@ def get_user_tasks(user_id):
 def save_task(user_id, task):
     """Save a single task to cloud"""
     if not USE_CLOUD:
+        print(f"⚠️  Cannot save task - USE_CLOUD is False")
         return False
 
     try:
@@ -71,12 +72,22 @@ def save_task(user_id, task):
             'updated_at': datetime.now().isoformat()
         }
 
+        print(f"🔄 Attempting to save task {task.get('id')[:8]}... for user {user_id}")
+        print(f"   Description: {task['description'][:30]}...")
+
         # Use upsert to insert or update
-        supabase.table('tasks').upsert(data).execute()
-        print(f"✅ Saved task {task.get('id')[:8]}... to cloud")
+        result = supabase.table('tasks').upsert(data).execute()
+
+        print(f"✅ Successfully saved task {task.get('id')[:8]}...")
+        print(f"   Supabase response: {len(result.data)} row(s) affected")
         return True
     except Exception as e:
-        print(f"❌ Error saving task: {e}")
+        print(f"❌ ERROR saving task to Supabase:")
+        print(f"   Task ID: {task.get('id')}")
+        print(f"   User: {user_id}")
+        print(f"   Error: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return False
 
 def delete_task_from_cloud(user_id, task_id):
