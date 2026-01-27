@@ -2,6 +2,7 @@
 Flow - Intelligent Task Management Application
 Production-ready version optimized for Render deployment
 Beautiful UI/UX with smart features and mobile-first design
+WITH CLOUD SYNC via Supabase
 """
 
 import dash
@@ -12,6 +13,27 @@ import json
 import uuid
 import re
 import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+# Supabase setup (optional - falls back to localStorage if not configured)
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+USE_CLOUD_SYNC = bool(SUPABASE_URL and SUPABASE_KEY)
+
+if USE_CLOUD_SYNC:
+    try:
+        from supabase import create_client, Client
+        supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+        print("✅ Cloud sync enabled with Supabase")
+    except Exception as e:
+        print(f"⚠️  Supabase connection failed: {e}")
+        print("📦 Falling back to localStorage")
+        USE_CLOUD_SYNC = False
+else:
+    print("📦 Using localStorage (set SUPABASE_URL and SUPABASE_KEY for cloud sync)")
 
 # Initialize Dash app
 app = dash.Dash(
