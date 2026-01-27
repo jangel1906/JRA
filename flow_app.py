@@ -351,13 +351,13 @@ login_layout = html.Div([
 # Main App Layout
 def create_main_layout():
     return dbc.Container([
-    # Data stores with persistent storage
-    dcc.Store(id="tasks-store", data=[], storage_type="local"),
-    dcc.Store(id="trash-store", data=[], storage_type="local"),
+    # Data stores - use memory storage for cloud sync, local for theme
+    dcc.Store(id="tasks-store", data=[], storage_type="memory" if USE_CLOUD_SYNC else "local"),
+    dcc.Store(id="trash-store", data=[], storage_type="memory" if USE_CLOUD_SYNC else "local"),
     dcc.Store(id="filter-state", data={"category": "all", "search": ""}),
     dcc.Store(id="edit-task-store", data=None),
     dcc.Store(id="theme-store", data="light", storage_type="local"),
-    dcc.Store(id="streak-store", data=0, storage_type="local"),
+    dcc.Store(id="streak-store", data=0, storage_type="memory" if USE_CLOUD_SYNC else "local"),
 
     # Quote Toast Container
     html.Div(id="quote-toast-container", style={"position": "fixed", "top": "20px", "right": "20px", "zIndex": "9999"}),
