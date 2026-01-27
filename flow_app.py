@@ -358,7 +358,8 @@ login_layout = html.Div([
                                 color="primary",
                                 className="w-100",
                                 size="lg"
-                            )
+                            ),
+                            html.Small("v2.0 - Cloud Sync Required", className="text-muted mt-3", style={"display": "block", "textAlign": "center"})
                         ])
                     ])
                 ], className="login-card")
@@ -682,22 +683,34 @@ app.layout = html.Div([
     dcc.Store(id="theme-store", data="light", storage_type="local"),
     # Start with login screen when cloud sync is enabled, otherwise empty div that gets filled by callback
     html.Div(id="page-content", children=login_layout if USE_CLOUD_SYNC else None),
-    # Clear old localStorage data when using cloud sync
+    # Clear old localStorage data when using cloud sync and force reload
     html.Script("""
         if (""" + str(USE_CLOUD_SYNC).lower() + """) {
-            // Clear ALL app localStorage data to force fresh login
-            const keysToRemove = [];
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                if (key && (key.includes('tasks-store') || key.includes('trash-store') || key.includes('streak-store') || key.includes('login-store'))) {
-                    keysToRemove.push(key);
+            // Check if we need to clear storage (only do once per session)
+            const clearFlag = sessionStorage.getItem('storage_cleared');
+
+            if (!clearFlag) {
+                console.log('🧹 First load - clearing all localStorage');
+                // Clear ALL app localStorage data to force fresh login
+                const keysToRemove = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && (key.includes('tasks-store') || key.includes('trash-store') || key.includes('streak-store') || key.includes('login-store'))) {
+                        keysToRemove.push(key);
+                    }
                 }
+                keysToRemove.forEach(key => {
+                    console.log('Clearing localStorage key:', key);
+                    localStorage.removeItem(key);
+                });
+
+                // Set flag so we don't clear again this session
+                sessionStorage.setItem('storage_cleared', 'true');
+                console.log('✅ Cleared all app localStorage - reloading page');
+
+                // Force reload to ensure fresh state
+                window.location.reload(true);
             }
-            keysToRemove.forEach(key => {
-                console.log('Clearing old localStorage key:', key);
-                localStorage.removeItem(key);
-            });
-            console.log('✅ Cleared all app localStorage - fresh start with cloud sync');
         }
     """) if USE_CLOUD_SYNC else html.Div()
 ], id="app-container", className="theme-light")
