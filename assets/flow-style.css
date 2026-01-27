@@ -288,9 +288,16 @@ input[type="checkbox"] {
 /* Custom Halo Ring Design */
 .halo-container {
     position: relative;
+    display: block;
+    width: 100%;
+    text-align: center;
+}
+
+.halo-container h1,
+.halo-container h2 {
     display: inline-block;
-    width: auto;
-    min-width: 280px;
+    white-space: nowrap;
+    min-width: 300px;
 }
 
 .custom-halo {
@@ -431,14 +438,22 @@ input[type="checkbox"] {
 }
 
 .login-card {
-    max-width: 450px;
-    min-width: 400px;
+    max-width: 500px;
+    min-width: 450px;
     width: 100%;
     padding: 3rem;
     border-radius: 20px;
     box-shadow: 0 20px 60px rgba(0,0,0,0.3);
     background: white;
     animation: fadeIn 0.5s ease-out;
+}
+
+.login-card h2 {
+    white-space: nowrap;
+}
+
+.login-card p {
+    white-space: nowrap;
 }
 
 /* Mobile responsive for login */
