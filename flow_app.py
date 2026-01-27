@@ -680,7 +680,8 @@ app.layout = html.Div([
     # When cloud sync is OFF, use local storage (persists login)
     dcc.Store(id="login-store", data={"logged_in": False, "username": ""}, storage_type="memory" if USE_CLOUD_SYNC else "local"),
     dcc.Store(id="theme-store", data="light", storage_type="local"),
-    html.Div(id="page-content"),
+    # Start with login screen when cloud sync is enabled, otherwise empty div that gets filled by callback
+    html.Div(id="page-content", children=login_layout if USE_CLOUD_SYNC else None),
     # Clear old localStorage data when using cloud sync
     html.Script("""
         if (""" + str(USE_CLOUD_SYNC).lower() + """) {
