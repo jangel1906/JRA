@@ -445,3 +445,38 @@ input[type="checkbox"] {
 .theme-dark .login-card {
     background-color: #25293c;
 }
+
+/* Recurring task badge styling */
+.badge-info {
+    background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%) !important;
+    color: white !important;
+}
+
+/* Trash view styling */
+.task-card.in-trash {
+    opacity: 0.7;
+    filter: grayscale(0.3);
+}
+
+/* Recurring options animation */
+#recurring-options {
+    transition: all 0.3s ease;
+}
+
+/* Trash badge styling */
+#trash-count {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+}
+
+/* Restore button animation */
+button[id*="restore-task"]:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+/* Permanent delete button animation */
+button[id*="permanent-delete-task"]:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}

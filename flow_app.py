@@ -149,7 +149,7 @@ def calculate_task_score(task):
 
     return score
 
-def create_task_card(task):
+def create_task_card(task, in_trash=False):
     """Create a beautiful task card"""
     category = CATEGORIES.get(task.get("category", "personal"))
     priority = PRIORITIES[task.get("priority", 3)]
@@ -175,52 +175,97 @@ def create_task_card(task):
         except:
             pass
 
+    # Recurring badge
+    recurring_badge = None
+    if task.get("recurring"):
+        freq_icons = {
+            "daily": "📅",
+            "weekly": "📆",
+            "monthly": "🗓️",
+            "yearly": "📊"
+        }
+        freq = task.get("recurring_freq", "daily")
+        recurring_badge = dbc.Badge(
+            [html.I(className="fas fa-redo me-1"), f"{freq_icons.get(freq, '🔄')} {freq.title()}"],
+            color="info",
+            className="me-2"
+        )
+
+    # Build badges list
+    badges = [
+        dbc.Badge(
+            [html.I(className="fas fa-flag me-1"), priority["name"]],
+            color="light",
+            text_color="dark",
+            className="me-2"
+        ),
+        dbc.Badge(
+            [category["icon"], " ", category["name"]],
+            color="light",
+            text_color="dark",
+            className="me-2"
+        )
+    ]
+
+    if recurring_badge:
+        badges.append(recurring_badge)
+    if due_badge:
+        badges.append(due_badge)
+
+    # Action buttons for trash vs active tasks
+    if in_trash:
+        action_buttons = html.Div([
+            dbc.Button(
+                [html.I(className="fas fa-undo me-1"), "Restore"],
+                id={"type": "restore-task", "index": task["id"]},
+                color="success",
+                size="sm",
+                className="me-2"
+            ),
+            dbc.Button(
+                [html.I(className="fas fa-times me-1"), "Delete Forever"],
+                id={"type": "permanent-delete-task", "index": task["id"]},
+                color="danger",
+                size="sm"
+            )
+        ], className="d-flex")
+    else:
+        action_buttons = html.Div([
+            dbc.Button(
+                html.I(className="fas fa-edit"),
+                id={"type": "edit-task", "index": task["id"]},
+                color="light",
+                size="sm",
+                className="me-2"
+            ),
+            dbc.Button(
+                html.I(className="fas fa-trash"),
+                id={"type": "delete-task", "index": task["id"]},
+                color="light",
+                size="sm"
+            )
+        ], className="d-flex")
+
     return dbc.Card([
         dbc.CardBody([
             html.Div([
                 dbc.Checkbox(
                     id={"type": "complete-task", "index": task["id"]},
                     className="me-3",
-                    style={"transform": "scale(1.4)"}
-                ),
+                    style={"transform": "scale(1.4)"},
+                    disabled=in_trash
+                ) if not in_trash else html.Div(style={"width": "20px"}),
                 html.Div([
-                    html.H6(task["description"], className="mb-2", style={"fontWeight": "600"}),
-                    html.Div([
-                        dbc.Badge(
-                            [html.I(className="fas fa-flag me-1"), priority["name"]],
-                            color="light",
-                            text_color="dark",
-                            className="me-2"
-                        ),
-                        dbc.Badge(
-                            [category["icon"], " ", category["name"]],
-                            color="light",
-                            text_color="dark",
-                            className="me-2"
-                        ),
-                        due_badge
-                    ])
+                    html.H6(task["description"], className="mb-2", style={"fontWeight": "600", "opacity": "0.6" if in_trash else "1"}),
+                    html.Div(badges)
                 ], style={"flex": "1"}),
-                html.Div([
-                    dbc.Button(
-                        html.I(className="fas fa-edit"),
-                        id={"type": "edit-task", "index": task["id"]},
-                        color="light",
-                        size="sm",
-                        className="me-2"
-                    ),
-                    dbc.Button(
-                        html.I(className="fas fa-trash"),
-                        id={"type": "delete-task", "index": task["id"]},
-                        color="light",
-                        size="sm"
-                    )
-                ], className="d-flex")
+                action_buttons
             ], className="d-flex align-items-center")
         ])
     ], className="mb-3 task-card", style={
         "borderLeft": f"4px solid {category['color']}",
-        "transition": "all 0.3s ease"
+        "transition": "all 0.3s ease",
+        "opacity": "0.8" if in_trash else "1"
     })
 
 # Login Layout
@@ -285,6 +330,7 @@ def create_main_layout():
     return dbc.Container([
     # Data stores with persistent storage
     dcc.Store(id="tasks-store", data=[], storage_type="local"),
+    dcc.Store(id="trash-store", data=[], storage_type="local"),
     dcc.Store(id="filter-state", data={"category": "all", "search": ""}),
     dcc.Store(id="edit-task-store", data=None),
     dcc.Store(id="theme-store", data="light", storage_type="local"),
@@ -488,6 +534,35 @@ def create_main_layout():
                             )
                         ], width=12)
                     ], className="mb-3"),
+
+                    # Recurring task options
+                    dbc.Row([
+                        dbc.Col([
+                            dbc.Checkbox(
+                                id="task-recurring-toggle",
+                                label="🔄 Make this recurring",
+                                value=False,
+                                className="mb-2"
+                            ),
+                            dbc.Collapse([
+                                dbc.Label("Repeat every:", size="sm", className="mb-1"),
+                                dbc.Select(
+                                    id="task-recurring-freq",
+                                    options=[
+                                        {"label": "📅 Daily", "value": "daily"},
+                                        {"label": "📆 Weekly", "value": "weekly"},
+                                        {"label": "🗓️ Monthly", "value": "monthly"},
+                                        {"label": "📊 Yearly", "value": "yearly"}
+                                    ],
+                                    value="daily",
+                                    size="sm",
+                                    className="mb-2"
+                                ),
+                                html.Small("Next occurrence will be created when completed", className="text-muted")
+                            ], id="recurring-options", is_open=False)
+                        ], width=12)
+                    ], className="mb-3"),
+
                     dbc.Button(
                         [html.I(className="fas fa-plus me-2"), "Add Task"],
                         id="add-task-btn",
@@ -507,10 +582,19 @@ def create_main_layout():
                         options=[
                             {"label": "📋 All Tasks", "value": "all"},
                             {"label": "⚡ Smart View", "value": "smart"},
-                            {"label": "📅 Due Today", "value": "today"}
+                            {"label": "📅 Due Today", "value": "today"},
+                            {"label": "🔄 Recurring", "value": "recurring"}
                         ],
                         value="smart",
                         className="mb-2"
+                    ),
+                    html.Hr(className="my-2"),
+                    dbc.Button(
+                        [html.I(className="fas fa-trash me-2"), "Trash", html.Span(id="trash-count", className="badge bg-secondary ms-2", children="0")],
+                        id="view-trash-btn",
+                        color="light",
+                        className="w-100",
+                        size="sm"
                     )
                 ])
             ])
@@ -552,24 +636,35 @@ app.layout = html.Div([
 # Callbacks
 
 @app.callback(
+    Output("recurring-options", "is_open"),
+    Input("task-recurring-toggle", "value")
+)
+def toggle_recurring_options(is_recurring):
+    """Toggle recurring options visibility"""
+    return is_recurring
+
+@app.callback(
     Output("tasks-store", "data"),
     Output("add-feedback", "children"),
     Output("task-input", "value"),
     Output("task-priority", "value"),
     Output("task-category", "value"),
     Output("task-due-date", "value"),
+    Output("task-recurring-toggle", "value"),
     Input("add-task-btn", "n_clicks"),
     State("task-input", "value"),
     State("task-priority", "value"),
     State("task-category", "value"),
     State("task-due-date", "value"),
+    State("task-recurring-toggle", "value"),
+    State("task-recurring-freq", "value"),
     State("tasks-store", "data"),
     prevent_initial_call=True
 )
-def add_task(n, description, priority, category, due_date, tasks):
+def add_task(n, description, priority, category, due_date, is_recurring, recurring_freq, tasks):
     """Add a new task"""
     if not description or not description.strip():
-        return tasks, dbc.Alert("Please enter a task!", color="warning", duration=3000), description, priority, category, due_date
+        return tasks, dbc.Alert("Please enter a task!", color="warning", duration=3000), description, priority, category, due_date, is_recurring
 
     # Parse natural language
     parsed = parse_natural_language(description)
@@ -581,16 +676,18 @@ def add_task(n, description, priority, category, due_date, tasks):
         "category": category,
         "due_date": due_date or parsed.get("due_date"),
         "created_at": datetime.now().isoformat(),
-        "completed": False
+        "completed": False,
+        "recurring": is_recurring,
+        "recurring_freq": recurring_freq if is_recurring else None
     }
 
     tasks.append(new_task)
 
     return tasks, dbc.Alert(
-        [html.I(className="fas fa-check-circle me-2"), "Task added!"],
+        [html.I(className="fas fa-check-circle me-2"), "Task added!" + (" (Recurring)" if is_recurring else "")],
         color="success",
         duration=3000
-    ), "", 3, "personal", ""
+    ), "", 3, "personal", "", False
 
 @app.callback(
     Output("task-list", "children"),
@@ -598,21 +695,43 @@ def add_task(n, description, priority, category, due_date, tasks):
     Output("stat-completed", "children"),
     Output("stat-rate", "children"),
     Output("stat-streak", "children"),
+    Output("trash-count", "children"),
     Input("tasks-store", "data"),
+    Input("trash-store", "data"),
     Input("view-filter", "value"),
     Input("search-input", "value"),
     Input("category-filter", "value"),
-    Input("streak-store", "data")
+    Input("streak-store", "data"),
+    Input("view-trash-btn", "n_clicks")
 )
-def update_tasks(tasks, view, search, category, streak):
+def update_tasks(tasks, trash, view, search, category, streak, trash_clicks):
     """Update task list and stats"""
+    trash_count = len(trash) if trash else 0
+
+    # Check if we're in trash view (based on button clicks)
+    in_trash_view = trash_clicks and trash_clicks % 2 == 1
+
+    if in_trash_view:
+        # Show trash items
+        if not trash:
+            empty = html.Div([
+                html.I(className="fas fa-trash fa-4x mb-3", style={"color": "#cbd5e1"}),
+                html.H5("Trash is empty", className="text-muted"),
+                html.P("Deleted tasks will appear here", className="text-muted")
+            ], className="text-center py-5")
+            return empty, "0", "0", "0%", str(streak), str(trash_count)
+
+        task_cards = [create_task_card(task, in_trash=True) for task in trash]
+        return task_cards, "0", "0", "0%", str(streak), str(trash_count)
+
+    # Regular task view
     if not tasks:
         empty = html.Div([
             html.I(className="fas fa-inbox fa-4x mb-3", style={"color": "#cbd5e1"}),
             html.H5("No tasks yet", className="text-muted"),
             html.P("Add your first task to get started!", className="text-muted")
         ], className="text-center py-5")
-        return empty, "0", "0", "0%", str(streak)
+        return empty, "0", "0", "0%", str(streak), str(trash_count)
 
     # Filter tasks
     active_tasks = [t for t in tasks if not t.get("completed")]
@@ -632,6 +751,8 @@ def update_tasks(tasks, view, search, category, streak):
         filtered = [t for t in filtered if t.get("due_date") == today_str]
     elif view == "smart":
         filtered.sort(key=calculate_task_score, reverse=True)
+    elif view == "recurring":
+        filtered = [t for t in filtered if t.get("recurring")]
 
     # Create task cards
     if not filtered:
@@ -648,7 +769,7 @@ def update_tasks(tasks, view, search, category, streak):
     total = len(tasks)
     completion_rate = f"{int((completed_count / total * 100))}%" if total > 0 else "0%"
 
-    return task_cards, str(active_count), str(completed_count), completion_rate, str(streak)
+    return task_cards, str(active_count), str(completed_count), completion_rate, str(streak), str(trash_count)
 
 @app.callback(
     Output("tasks-store", "data", allow_duplicate=True),
@@ -677,12 +798,51 @@ def complete_task(values, tasks, current_streak):
     task_id = json.loads(trigger.split(".")[0])["index"]
 
     completed_category = None
+    is_recurring = False
+    recurring_task_data = None
+
     for task in tasks:
         if task["id"] == task_id:
             task["completed"] = True
             task["completed_at"] = datetime.now().isoformat()
             completed_category = task.get("category", "work")
+
+            # Check if this is a recurring task
+            if task.get("recurring"):
+                is_recurring = True
+                recurring_task_data = task.copy()
             break
+
+    # If recurring, create next occurrence
+    if is_recurring and recurring_task_data:
+        next_task = recurring_task_data.copy()
+        next_task["id"] = str(uuid.uuid4())
+        next_task["completed"] = False
+        next_task["completed_at"] = None
+        next_task["created_at"] = datetime.now().isoformat()
+
+        # Calculate next due date
+        if next_task.get("due_date"):
+            try:
+                current_due = datetime.strptime(next_task["due_date"], "%Y-%m-%d")
+                freq = next_task.get("recurring_freq", "daily")
+
+                if freq == "daily":
+                    next_due = current_due + timedelta(days=1)
+                elif freq == "weekly":
+                    next_due = current_due + timedelta(weeks=1)
+                elif freq == "monthly":
+                    next_due = current_due + timedelta(days=30)
+                elif freq == "yearly":
+                    next_due = current_due + timedelta(days=365)
+                else:
+                    next_due = current_due + timedelta(days=1)
+
+                next_task["due_date"] = next_due.strftime("%Y-%m-%d")
+            except:
+                pass
+
+        tasks.append(next_task)
 
     # Get a random quote based on the task category
     if completed_category:
@@ -755,20 +915,35 @@ def complete_task(values, tasks, current_streak):
 
 @app.callback(
     Output("tasks-store", "data", allow_duplicate=True),
+    Output("trash-store", "data", allow_duplicate=True),
     Input({"type": "delete-task", "index": ALL}, "n_clicks"),
     State("tasks-store", "data"),
+    State("trash-store", "data"),
     prevent_initial_call=True
 )
-def delete_task(n_clicks, tasks):
-    """Delete a task"""
+def delete_task(n_clicks, tasks, trash):
+    """Move task to trash"""
     if not ctx.triggered or not any(n_clicks):
-        return tasks
+        return tasks, trash
 
     trigger = ctx.triggered[0]["prop_id"]
     task_id = json.loads(trigger.split(".")[0])["index"]
 
-    tasks = [t for t in tasks if t["id"] != task_id]
-    return tasks
+    # Find the task and move it to trash
+    task_to_delete = None
+    for task in tasks:
+        if task["id"] == task_id:
+            task_to_delete = task.copy()
+            task_to_delete["deleted_at"] = datetime.now().isoformat()
+            break
+
+    if task_to_delete:
+        if not trash:
+            trash = []
+        trash.append(task_to_delete)
+        tasks = [t for t in tasks if t["id"] != task_id]
+
+    return tasks, trash
 
 @app.callback(
     Output("edit-modal", "is_open"),
@@ -859,6 +1034,54 @@ def toggle_theme(n_clicks, current_theme):
     new_theme = "dark" if current_theme == "light" else "light"
     icon_class = "fas fa-sun" if new_theme == "dark" else "fas fa-moon"
     return new_theme, icon_class
+
+@app.callback(
+    Output("tasks-store", "data", allow_duplicate=True),
+    Output("trash-store", "data", allow_duplicate=True),
+    Input({"type": "restore-task", "index": ALL}, "n_clicks"),
+    State("tasks-store", "data"),
+    State("trash-store", "data"),
+    prevent_initial_call=True
+)
+def restore_task(n_clicks, tasks, trash):
+    """Restore task from trash"""
+    if not ctx.triggered or not any(n_clicks):
+        return tasks, trash
+
+    trigger = ctx.triggered[0]["prop_id"]
+    task_id = json.loads(trigger.split(".")[0])["index"]
+
+    # Find the task in trash and restore it
+    task_to_restore = None
+    for task in trash:
+        if task["id"] == task_id:
+            task_to_restore = task.copy()
+            if "deleted_at" in task_to_restore:
+                del task_to_restore["deleted_at"]
+            break
+
+    if task_to_restore:
+        tasks.append(task_to_restore)
+        trash = [t for t in trash if t["id"] != task_id]
+
+    return tasks, trash
+
+@app.callback(
+    Output("trash-store", "data", allow_duplicate=True),
+    Input({"type": "permanent-delete-task", "index": ALL}, "n_clicks"),
+    State("trash-store", "data"),
+    prevent_initial_call=True
+)
+def permanent_delete_task(n_clicks, trash):
+    """Permanently delete task from trash"""
+    if not ctx.triggered or not any(n_clicks):
+        return trash
+
+    trigger = ctx.triggered[0]["prop_id"]
+    task_id = json.loads(trigger.split(".")[0])["index"]
+
+    trash = [t for t in trash if t["id"] != task_id]
+    return trash
 
 @app.callback(
     Output("app-container", "className"),
