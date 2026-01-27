@@ -379,6 +379,9 @@ def create_main_layout():
     dcc.Store(id="theme-store", data="light", storage_type="local"),
     dcc.Store(id="streak-store", data=0, storage_type="memory" if USE_CLOUD_SYNC else "local"),
 
+    # Interval that fires once on page load to trigger cloud data sync
+    dcc.Interval(id="page-load-interval", interval=100, n_intervals=0, max_intervals=1),
+
     # Quote Toast Container
     html.Div(id="quote-toast-container", style={"position": "fixed", "top": "20px", "right": "20px", "zIndex": "9999"}),
 
@@ -1383,86 +1386,32 @@ def update_username_display(login_data):
     Output("tasks-store", "data", allow_duplicate=True),
     Output("trash-store", "data", allow_duplicate=True),
     Output("streak-store", "data", allow_duplicate=True),
-    Input("page-content", "children"),
-    State("login-store", "data"),
-    State("tasks-store", "data"),
-    State("trash-store", "data"),
-    State("streak-store", "data"),
-    prevent_initial_call=False
-)
-def load_cloud_data_on_page_load(page_content, login_data, local_tasks, local_trash, local_streak):
-    """Load user data from cloud when page loads (fixes mobile app reopening issue)"""
-    print(f"\n🔍 LOAD CLOUD DATA ON PAGE LOAD:")
-    print(f"   login_data: {login_data}")
-    print(f"   USE_CLOUD_SYNC: {USE_CLOUD_SYNC}")
-    print(f"   local_tasks count: {len(local_tasks) if local_tasks else 0}")
-
-    if not login_data.get("logged_in") or not USE_CLOUD_SYNC:
-        print(f"   ❌ Skipping cloud load - logged_in:{login_data.get('logged_in')}, USE_CLOUD_SYNC:{USE_CLOUD_SYNC}")
-        return local_tasks, local_trash, local_streak
-
-    username = login_data.get("username")
-    if not username:
-        print(f"   ❌ No username found")
-        return local_tasks, local_trash, local_streak
-
-    try:
-        # Load tasks from cloud
-        print(f"   📡 Fetching tasks from Supabase for user: {username}")
-        cloud_tasks = supabase_db.get_user_tasks(username)
-        print(f"   📦 Retrieved {len(cloud_tasks)} tasks from cloud")
-
-        # Load trash from cloud
-        cloud_trash = supabase_db.get_user_trash(username)
-
-        # Load stats from cloud
-        stats = supabase_db.get_user_stats(username)
-        cloud_streak = stats.get('streak', 0)
-
-        # If cloud is empty but we have local data, sync local to cloud (first login)
-        if not cloud_tasks and local_tasks:
-            print(f"   📤 Migrating {len(local_tasks)} local tasks to cloud...")
-            supabase_db.sync_local_to_cloud(username, local_tasks)
-            cloud_tasks = local_tasks
-
-        print(f"   ✅ Loaded {len(cloud_tasks)} tasks from cloud for {username}")
-        if cloud_tasks:
-            for task in cloud_tasks:
-                print(f"      - {task.get('description')} (ID: {task.get('id')[:8]}...)")
-
-        return cloud_tasks, cloud_trash, cloud_streak
-
-    except Exception as e:
-        print(f"   ⚠️  Error loading cloud data: {e}")
-        import traceback
-        traceback.print_exc()
-        return local_tasks, local_trash, local_streak
-
-@app.callback(
-    Output("tasks-store", "data", allow_duplicate=True),
-    Output("trash-store", "data", allow_duplicate=True),
-    Output("streak-store", "data", allow_duplicate=True),
+    Input("page-load-interval", "n_intervals"),
     Input("login-store", "data"),
     State("tasks-store", "data"),
     State("trash-store", "data"),
     State("streak-store", "data"),
     prevent_initial_call=True
 )
-def load_cloud_data_on_login(login_data, local_tasks, local_trash, local_streak):
-    """Load user data from cloud when login state changes (original callback for login events)"""
-    print(f"\n🔍 LOAD CLOUD DATA ON LOGIN CHANGE:")
+def load_cloud_data(n_intervals, login_data, local_tasks, local_trash, local_streak):
+    """Load user data from cloud on page load or when login changes"""
+    ctx = dash.callback_context
+    trigger = ctx.triggered[0]['prop_id'].split('.')[0] if ctx.triggered else None
+
+    print(f"\n🔍 LOAD CLOUD DATA:")
+    print(f"   Triggered by: {trigger}")
     print(f"   login_data: {login_data}")
     print(f"   USE_CLOUD_SYNC: {USE_CLOUD_SYNC}")
     print(f"   local_tasks count: {len(local_tasks) if local_tasks else 0}")
 
-    if not login_data.get("logged_in") or not USE_CLOUD_SYNC:
-        print(f"   ❌ Skipping cloud load - logged_in:{login_data.get('logged_in')}, USE_CLOUD_SYNC:{USE_CLOUD_SYNC}")
-        return local_tasks, local_trash, local_streak
+    if not login_data or not login_data.get("logged_in") or not USE_CLOUD_SYNC:
+        print(f"   ❌ Skipping cloud load - logged_in:{login_data.get('logged_in') if login_data else None}, USE_CLOUD_SYNC:{USE_CLOUD_SYNC}")
+        return local_tasks or [], local_trash or [], local_streak or 0
 
     username = login_data.get("username")
     if not username:
         print(f"   ❌ No username found")
-        return local_tasks, local_trash, local_streak
+        return local_tasks or [], local_trash or [], local_streak or 0
 
     try:
         # Load tasks from cloud
@@ -1494,7 +1443,7 @@ def load_cloud_data_on_login(login_data, local_tasks, local_trash, local_streak)
         print(f"   ⚠️  Error loading cloud data: {e}")
         import traceback
         traceback.print_exc()
-        return local_tasks, local_trash, local_streak
+        return local_tasks or [], local_trash or [], local_streak or 0
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8052))
