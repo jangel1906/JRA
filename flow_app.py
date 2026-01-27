@@ -677,25 +677,25 @@ def create_main_layout():
 
 # Actual app layout with conditional rendering
 app.layout = html.Div([
-    # When cloud sync is ON, use memory storage for login (requires fresh login each session)
-    # When cloud sync is OFF, use local storage (persists login)
-    dcc.Store(id="login-store", data={"logged_in": False, "username": ""}, storage_type="memory" if USE_CLOUD_SYNC else "local"),
+    # Always use localStorage for login - it's reliable and we need it to persist
+    dcc.Store(id="login-store", data={"logged_in": False, "username": ""}, storage_type="local"),
     dcc.Store(id="theme-store", data="light", storage_type="local"),
     # Start with login screen when cloud sync is enabled, otherwise empty div that gets filled by callback
     html.Div(id="page-content", children=login_layout if USE_CLOUD_SYNC else None),
-    # Clear old localStorage data when using cloud sync and force reload
+    # Clear ONLY task-related localStorage on first load (NOT login data)
     html.Script("""
         if (""" + str(USE_CLOUD_SYNC).lower() + """) {
             // Check if we need to clear storage (only do once per session)
-            const clearFlag = sessionStorage.getItem('storage_cleared');
+            const clearFlag = sessionStorage.getItem('storage_cleared_v2');
 
             if (!clearFlag) {
-                console.log('🧹 First load - clearing all localStorage');
-                // Clear ALL app localStorage data to force fresh login
+                console.log('🧹 First load - clearing task localStorage (keeping login)');
+                // Clear task data but KEEP login data
                 const keysToRemove = [];
                 for (let i = 0; i < localStorage.length; i++) {
                     const key = localStorage.key(i);
-                    if (key && (key.includes('tasks-store') || key.includes('trash-store') || key.includes('streak-store') || key.includes('login-store'))) {
+                    // Clear tasks/trash/streak but NOT login-store
+                    if (key && (key.includes('tasks-store') || key.includes('trash-store') || key.includes('streak-store')) && !key.includes('login-store')) {
                         keysToRemove.push(key);
                     }
                 }
@@ -705,11 +705,8 @@ app.layout = html.Div([
                 });
 
                 // Set flag so we don't clear again this session
-                sessionStorage.setItem('storage_cleared', 'true');
-                console.log('✅ Cleared all app localStorage - reloading page');
-
-                // Force reload to ensure fresh state
-                window.location.reload(true);
+                sessionStorage.setItem('storage_cleared_v2', 'true');
+                console.log('✅ Cleared task localStorage - login preserved');
             }
         }
     """) if USE_CLOUD_SYNC else html.Div()
@@ -1288,17 +1285,26 @@ def reset_streak(n_clicks):
 )
 def display_page(login_data):
     """Display login page or main app based on login status"""
+    print(f"\n📄 DISPLAY PAGE CALLBACK:")
+    print(f"   login_data: {login_data}")
+    print(f"   logged_in: {login_data.get('logged_in') if login_data else None}")
+    print(f"   username: {login_data.get('username') if login_data else None}")
+
     # When cloud sync is enabled, require login
     if USE_CLOUD_SYNC:
         if login_data and login_data.get("logged_in") and login_data.get("username"):
-            print(f"✅ User logged in: {login_data.get('username')}")
+            print(f"   ✅ Showing main app for user: {login_data.get('username')}")
             return create_main_layout()
         else:
-            print(f"❌ User not logged in, showing login page. login_data: {login_data}")
+            print(f"   ❌ Showing login page (not logged in)")
             return login_layout
+
     # Without cloud sync, allow access without login
-    if login_data.get("logged_in"):
+    if login_data and login_data.get("logged_in"):
+        print(f"   ✅ Showing main app (no cloud sync)")
         return create_main_layout()
+
+    print(f"   ❌ Showing login page (default)")
     return login_layout
 
 @app.callback(
