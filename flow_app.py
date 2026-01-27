@@ -1348,8 +1348,16 @@ def handle_login(n_clicks, username, password):
 )
 def handle_logout(n_clicks):
     """Handle logout"""
+    from dash import no_update
+
+    print(f"\n🚪 LOGOUT CALLBACK:")
+    print(f"   n_clicks: {n_clicks}")
+
     if not n_clicks:
-        return {"logged_in": False, "username": ""}
+        print(f"   ⚠️  No clicks, returning no_update")
+        return no_update
+
+    print(f"   ✅ Logging out user")
     return {"logged_in": False, "username": ""}
 
 @app.callback(
