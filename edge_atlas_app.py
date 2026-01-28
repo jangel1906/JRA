@@ -263,10 +263,44 @@ app.layout = html.Div(
             ]
         ),
 
-        # Stats overview
+        # Results area - FIRST so users see it immediately
+        dcc.Loading(
+            id="loading",
+            type="circle",
+            color="#e94560",
+            children=[
+                html.Div(
+                    className="card",
+                    style={"marginBottom": "20px"},
+                    children=[
+                        html.Div(className="card-header", children=["Results"]),
+                        html.Div(
+                            id="results-container",
+                            className="results-container",
+                            style={"minHeight": "200px", "maxHeight": "400px"},
+                            children="Tap 'Scan All Markets' to find edges..."
+                        ),
+                    ]
+                ),
+            ]
+        ),
+
+        # Data status section
+        html.Div(
+            className="card",
+            id="data-status-card",
+            style={"display": "none"},
+            children=[
+                html.Div(className="card-header", children=["Data Freshness Status"]),
+                html.Div(id="data-status-content"),
+            ]
+        ),
+
+        # Stats overview - moved below results
         html.Div(
             className="stats-grid",
             id="stats-grid",
+            style={"marginTop": "20px"},
             children=[
                 html.Div(className="stat-card", children=[
                     html.Div("--", className="stat-value", id="stat-edges"),
@@ -284,38 +318,6 @@ app.layout = html.Div(
                     html.Div("--", className="stat-value", id="stat-confidence"),
                     html.Div("Avg Confidence", className="stat-label"),
                 ]),
-            ]
-        ),
-
-        # Loading indicator
-        dcc.Loading(
-            id="loading",
-            type="circle",
-            color="#e94560",
-            children=[
-                # Results area
-                html.Div(
-                    className="card",
-                    children=[
-                        html.Div(className="card-header", children=["Results"]),
-                        html.Div(
-                            id="results-container",
-                            className="results-container",
-                            children="Click 'Scan All Markets' to begin edge detection..."
-                        ),
-                    ]
-                ),
-            ]
-        ),
-
-        # Data status section
-        html.Div(
-            className="card",
-            id="data-status-card",
-            style={"display": "none"},
-            children=[
-                html.Div(className="card-header", children=["Data Freshness Status"]),
-                html.Div(id="data-status-content"),
             ]
         ),
 
