@@ -1,3 +1,6 @@
 dash
+dash-bootstrap-components
 requests
 gunicorn
+supabase
+python-dotenv
