@@ -23,6 +23,7 @@ from .engine.live_analyzer import LiveGameAnalyzer
 from .engine.real_data_analyzer import RealDataAnalyzer
 from .engine.smart_evaluator import SmartEvaluator, format_smart_pick
 from .utils.formatter import OutputFormatter
+from .config import LeagueData, print_data_status
 
 
 class EdgeAtlasAgent:
@@ -467,6 +468,55 @@ ATLAS V5.0 uses Half-Kelly capped at grade-appropriate levels.
         available = ", ".join(self.EDUCATION_TOPICS.keys())
         return f"Topic '{topic}' not found.\n\nAvailable topics: {available}"
 
+    def get_data_status(self) -> str:
+        """
+        [6] DATA FRESHNESS STATUS
+        Check if league data is current and accurate.
+        """
+        output = []
+        output.append("\n" + "=" * 70)
+        output.append("EDGE ATLAS V5.0 - DATA FRESHNESS STATUS")
+        output.append("=" * 70)
+
+        status = LeagueData.get_freshness_status()
+
+        # Overall status
+        status_symbol = "✅" if status["status"] == "FRESH" else "⚠️" if status["status"] == "CURRENT" else "❌"
+        output.append(f"\nOverall Status: {status_symbol} {status['status']}")
+        output.append(f"Last Updated: {status['last_updated']}")
+        output.append(f"Season: {status['season']}")
+        output.append(f"Data Age: {status['age_days']} days")
+
+        output.append("\n" + "-" * 70)
+        output.append("BY SPORT:")
+        output.append("-" * 70)
+
+        for sport, updated in status['sports'].items():
+            sport_data = getattr(LeagueData, sport.upper(), {})
+            season = sport_data.get("season", "N/A")
+            output.append(f"\n  {sport.upper()}")
+            output.append(f"    Season: {season}")
+            output.append(f"    Last Updated: {updated}")
+
+        output.append("\n" + "-" * 70)
+        output.append("KEY METRICS TRACKED:")
+        output.append("-" * 70)
+
+        output.append("\n  NFL: PPG, YPG, YPP, Home Field Advantage (2.5 pts)")
+        output.append("  NBA: Pace, ORtg/DRtg, eFG%, TS%, Home Court (2.5 pts)")
+        output.append("  CFB: PPG, YPG, Conference Adjustments, HFA by Venue")
+        output.append("  CBB: Tempo, Efficiency, KenPom Thresholds, HCA by Conf")
+        output.append("  NHL: Goals/Game, Corsi, xG, Save%, B2B Impact")
+
+        if status["age_days"] > 7:
+            output.append("\n" + "⚠️" * 10)
+            output.append("DATA IS STALE - UPDATE RECOMMENDED")
+            output.append("Run: from edge_atlas.config import print_data_status")
+            output.append("⚠️" * 10)
+
+        output.append("\n" + "=" * 70)
+        return "\n".join(output)
+
     def verify_bet(
         self,
         sport: str,
@@ -542,6 +592,9 @@ ATLAS V5.0 uses Half-Kelly capped at grade-appropriate levels.
                     else:
                         print(f"Available topics: {', '.join(self.EDUCATION_TOPICS.keys())}")
 
+                elif command in ["6", "data", "status", "freshness"]:
+                    print(self.get_data_status())
+
                 elif command in ["help", "h", "?"]:
                     print("""
 EDGE ATLAS V5.0 COMMANDS:
@@ -550,8 +603,9 @@ EDGE ATLAS V5.0 COMMANDS:
 2 / live        - Get live in-game suggestions
 3 <sport>       - Deep dive on specific sport (nfl, nba, cfb, cbb, nhl)
 score <sport>   - Get current scoreboard
-learn <topic>   - Learn an analytics concept
+5 / learn <topic> - Learn an analytics concept
                   Topics: dvoa, epa, kenpom, corsi, clv, kelly
+6 / data        - Check data freshness status
 
 help            - Show this help
 exit            - Exit EDGE ATLAS
