@@ -1,0 +1,145 @@
+/* Edge Atlas V5.0 Styles */
+body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    color: #e8e8e8;
+    margin: 0;
+    min-height: 100vh;
+}
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+}
+.header {
+    text-align: center;
+    padding: 30px 0;
+    border-bottom: 2px solid #e94560;
+    margin-bottom: 30px;
+}
+.header h1 {
+    font-size: 2.5em;
+    margin: 0;
+    background: linear-gradient(90deg, #e94560, #ff6b6b);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+.header p {
+    color: #888;
+    margin-top: 10px;
+}
+.controls {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    margin-bottom: 30px;
+    justify-content: center;
+    align-items: center;
+}
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.3s;
+}
+.btn-primary {
+    background: linear-gradient(135deg, #e94560, #ff6b6b);
+    color: white;
+}
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(233, 69, 96, 0.4);
+}
+.btn-secondary {
+    background: #2d2d44;
+    color: #e8e8e8;
+    border: 1px solid #444;
+}
+.btn-secondary:hover {
+    background: #3d3d54;
+}
+.card {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.card-header {
+    font-size: 1.2em;
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: #e94560;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 30px;
+}
+.stat-card {
+    background: rgba(233, 69, 96, 0.1);
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    border: 1px solid rgba(233, 69, 96, 0.3);
+}
+.stat-value {
+    font-size: 2em;
+    font-weight: 700;
+    color: #e94560;
+}
+.stat-label {
+    color: #888;
+    font-size: 0.9em;
+    margin-top: 5px;
+}
+.results-container {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
+    padding: 20px;
+    font-family: 'Monaco', 'Consolas', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    max-height: 600px;
+    overflow-y: auto;
+    border: 1px solid #333;
+}
+.data-status {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+}
+.status-item {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+}
+.status-fresh { border-left: 3px solid #2ecc71; }
+.status-current { border-left: 3px solid #f39c12; }
+.status-stale { border-left: 3px solid #e74c3c; }
+.footer {
+    text-align: center;
+    padding: 30px;
+    color: #666;
+    font-size: 0.9em;
+    border-top: 1px solid #333;
+    margin-top: 40px;
+}
+/* Dropdown styling */
+.Select-control {
+    background: #2d2d44 !important;
+    border-color: #444 !important;
+}
+.Select-menu-outer {
+    background: #2d2d44 !important;
+}

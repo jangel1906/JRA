@@ -227,9 +227,8 @@ body {
 # Layout
 app.layout = html.Div(
     className="container",
+    style={"fontFamily": "'Segoe UI', system-ui, sans-serif", "background": "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)", "color": "#e8e8e8", "minHeight": "100vh", "padding": "20px"},
     children=[
-        html.Style(CUSTOM_CSS),
-
         # Header
         html.Div(
             className="header",
@@ -586,4 +585,4 @@ def handle_scan_sport(n_clicks, sport):
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
-    app.run_server(host="0.0.0.0", port=port, debug=False)
+    app.run(host="0.0.0.0", port=port, debug=False)
